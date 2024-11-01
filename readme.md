@@ -5,3 +5,7 @@ In terminal:
     "dev": "node --watch ./bin/www"
 4) $ npm run dev
 5) $ npm install express mongoose jsonwebtoken bcryptjs jsend
+
+
+
+// voor github doe: git push -u origin master

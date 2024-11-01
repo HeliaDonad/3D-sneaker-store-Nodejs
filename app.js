@@ -8,8 +8,8 @@ const jsend = require('jsend'); // toegevoegd
 //var indexRouter = require('./routes/index');
 //var usersRouter = require('./routes/users');
 
-const orderRoutes = require('./routes/orderRoutes'); // toegevoegd
-const userRoutes = require('./routes/authRoutes'); // toegevoegd
+const orderRoutes = require('./routes/api/v1/orderRoutes'); // toegevoegd
+const userRoutes = require('./routes/api/v1/authRoutes'); // toegevoegd
 
 // toegevoegd
 const app = express();

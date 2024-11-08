@@ -15,6 +15,10 @@ const orderRoutes = require('./routes/api/v1/orderRoutes');
 app.use('/api/v1', orderRoutes);
 
 
+const userRoutes = require('./routes/api/v1/UserRoutes');
+app.use('/api/v1', userRoutes);
+
+
 connectDB(); // Start de verbinding met MongoDB
 
 // Exporteer `app` zodat het kan worden gebruikt in `www`

@@ -3,26 +3,28 @@
 
 const jwt = require('jsonwebtoken');
 
+// Middleware om gebruikers te verifiëren met JWT
 const auth = (req, res, next) => {
-  const token = req.header('Authorization'); // Haal het token op uit de Authorization-header
-  if (!token) return res.status(401).json({ status: 'fail', message: 'Access Denied: No Token Provided' });
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  if (!token) {
+    return res.status(401).json({ status: 'fail', message: 'Access Denied: No Token Provided' });
+  }
 
   try {
-    // Verifieer het token en decodeer de gegevens
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Bewaar de gebruiker info in req.user voor verdere toegang
-    next(); // Ga verder naar de volgende middleware of route
+    req.user = decoded;
+    next();
   } catch (error) {
     res.status(400).json({ status: 'fail', message: 'Invalid Token' });
   }
 };
 
+// Middleware om alleen toegang te geven aan admins
 const adminAuth = (req, res, next) => {
-  if (!req.user.isAdmin) { // Controleer of de gebruiker admin-rechten heeft
+  if (!req.user || !req.user.isAdmin) {
     return res.status(403).json({ status: 'fail', message: 'Access Denied: Admins Only' });
   }
-  next(); // Ga verder naar de volgende middleware of route
+  next();
 };
 
 module.exports = { auth, adminAuth };
-

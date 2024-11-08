@@ -1,19 +1,15 @@
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
-    color: String,
-    size: Number,
-    customerContact: {
-        name: String,
-        email: String,
-        phone: String,
-    },
-    status: {
-        type: String,
-        enum: ['in productie', 'verzonden'],
-        default: 'in productie',
-    },
-    date: { type: Date, default: Date.now },
+  color: { type: String, required: true },
+  size: { type: Number, required: true },
+  contactInfo: {
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    phone: { type: String, required: true }
+  },
+  status: { type: String, default: 'In productie' },
+  createdAt: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model('Order', orderSchema);

@@ -10,3 +10,8 @@ In terminal:
 8) $ npm install cors
 
 // voor github doe: git push -u origin master
+
+
+database
+    username: adlin
+    password: SedaHelia1478

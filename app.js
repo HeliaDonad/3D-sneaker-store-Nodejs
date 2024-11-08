@@ -1,57 +1,21 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
-const jsend = require('jsend'); // toegevoegd
-const mongoose = require('mongoose'); // toegevoegd
-const config = require('config'); // toegevoegd
-const cors = require('cors'); // toegevoegd
-
-//var indexRouter = require('./routes/index');
-//var usersRouter = require('./routes/users');
-
-const orderRoutes = require('./routes/api/v1/orderRoutes'); // toegevoegd
-const userRoutes = require('./routes/api/v1/authRoutes'); // toegevoegd
-
-// toegevoegd
+const express = require('express');
 const app = express();
+require('dotenv').config();
+
+// Configuratie en middleware toevoegen
 app.use(express.json());
-app.use(jsend.middleware);
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
-
-app.use(cors());
-
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
-
-// toegevoegd
-app.use('/api/v1/orders', orderRoutes);
-app.use('/api/v1/users', userRoutes);
-
-//app.use('/', indexRouter);
-//app.use('/users', usersRouter);
-
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
+const connectDB = require('./config/db');
+require('dotenv').config();
+app.get('/', (req, res) => {
+  res.send('Welcome to the 3D Configurator API');
 });
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+const orderRoutes = require('./routes/api/v1/orderRoutes');
+app.use('/api/v1', orderRoutes);
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
 
+connectDB(); // Start de verbinding met MongoDB
+
+// Exporteer `app` zodat het kan worden gebruikt in `www`
 module.exports = app;

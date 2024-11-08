@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../../../models/api/v1/userModel'); // Zorg ervoor dat dit pad klopt
+const { auth } = require('../../../middleware/auth'); // Zorg dat het pad naar auth correct is
 
 // Registratieroute om een nieuwe gebruiker toe te voegen
 router.post('/register', async (req, res) => {
@@ -50,5 +51,27 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+router.put('/change-password', auth, async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) return res.status(404).json({ status: 'fail', data: { message: 'User not found' } });
+
+    // Controleer of het oude wachtwoord klopt
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) return res.status(400).json({ status: 'fail', data: { message: 'Incorrect old password' } });
+
+    // Update naar het nieuwe wachtwoord
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.status(200).json({ status: 'success', data: { message: 'Password updated successfully' } });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+});
+
 
 module.exports = router;

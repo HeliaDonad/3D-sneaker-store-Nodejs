@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const Order = require('../../../models/api/v1/orderModel'); // Controleer dat dit pad correct is
-const { auth, adminAuth } = require('../../../middleware/auth'); // Zorg dat auth-middleware juist is geïmporteerd
+const Order = require('../../../models/api/v1/orderModel'); 
+const { auth, adminAuth } = require('../../../middleware/auth');
 
 // Testroute om een document toe te voegen en op te halen
 router.get('/test-db', async (req, res) => {
@@ -25,7 +25,7 @@ router.get('/test-db', async (req, res) => {
   }
 });
 
-// 1. POST /orders - Voeg een nieuwe bestelling toe
+// 1. POST /orders - Een nieuwe bestelling toevoegen met configuratiegegevens zoals kleur, maat en contactinformatie.
 router.post('/orders', async (req, res) => {
   try {
     const newOrder = new Order({
@@ -46,7 +46,8 @@ router.post('/orders', async (req, res) => {
   }
 });
 
-// 2. DELETE /orders/:id - Verwijder een bestelling (alleen admin)
+
+// 2. DELETE /orders/:id - Verwijdert een bestelling, alleen toegankelijk voor admins.
 router.delete('/orders/:id', auth, adminAuth, async (req, res) => {
   try {
     const order = await Order.findByIdAndDelete(req.params.id);
@@ -60,23 +61,17 @@ router.delete('/orders/:id', auth, adminAuth, async (req, res) => {
 });
 
 
-// 3. PUT /orders/:id - Update de status van een bestelling (alleen admin)
-// Update de status van een bestelling
+// 3. PUT /orders/:id - Update de status van een bestelling, vb naar "In productie" of "Verzonden". Alleen toegankelijk voor admins.
 router.put('/orders/:id', auth, adminAuth, async (req, res) => {
   try {
-    // Zoek en update de bestelling
     const order = await Order.findByIdAndUpdate(
       req.params.id,
       { status: req.body.status },
-      { new: true } // Hiermee retourneert Mongoose de bijgewerkte bestelling
+      { new: true }
     );
-
-    // Controleer of de bestelling bestaat
     if (!order) {
       return res.status(404).json({ status: 'error', message: 'Order not found' });
     }
-
-    // Stuur de bijgewerkte bestelling terug
     res.status(200).json({ status: 'success', data: order });
   } catch (error) {
     res.status(500).json({ status: 'error', message: error.message });
@@ -95,14 +90,14 @@ router.get('/orders/:id', async (req, res) => {
 });
 
 // 5. GET /orders - Haal alle bestellingen op met sorteeroptie
-router.get('/orders', async (req, res) => {
+router.get('/orders', auth, async (req, res) => {
   try {
-    const sortBy = req.query.sortby === 'date' ? { createdAt: -1 } : {};
-    const orders = await Order.find().sort(sortBy);
+    const orders = await Order.find().sort({ createdAt: -1 });
     res.status(200).json({ status: 'success', data: orders });
   } catch (error) {
     res.status(500).json({ status: 'error', message: error.message });
   }
 });
+
 
 module.exports = router;

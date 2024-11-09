@@ -38,8 +38,6 @@ router.post('/orders', auth, [
 
 
 // 2. DELETE /orders/:id - Verwijdert een bestelling, alleen toegankelijk voor admins.
-// DELETE /orders/:id - Verwijdert een bestelling, alleen toegankelijk voor admins.
-// DELETE /orders/:id - Verwijder een bestelling, alleen toegankelijk voor admins.
 router.delete('/orders/:id', auth, adminAuth, async (req, res) => {
   try {
     console.log("Ontvangen ID voor verwijdering:", req.params.id);  // Controleer het ontvangen ID

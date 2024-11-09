@@ -38,28 +38,36 @@ router.post('/orders', auth, [
 
 
 // 2. DELETE /orders/:id - Verwijdert een bestelling, alleen toegankelijk voor admins.
-router.delete('/orders/:id', auth, adminAuth, async (req, res) => {
-  try {
-    console.log("Ontvangen ID voor verwijdering:", req.params.id); 
+const mongoose = require('mongoose');
 
+router.delete('/orders/:id', auth, adminAuth, async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ status: 'fail', message: 'Invalid ID format' });
+  }
+
+  try {
     const order = await Order.findByIdAndDelete(req.params.id);
     if (!order) {
-      console.log("Bestelling niet gevonden voor ID:", req.params.id);
       return res.status(404).json({ status: 'fail', message: 'Order not found' });
     }
 
-    console.log("Bestelling verwijderd:", req.params.id);
     res.status(200).json({ status: 'success', data: null });
   } catch (error) {
-    console.error("Fout bij verwijderen:", error.message);
     res.status(500).json({ status: 'error', message: error.message });
   }
 });
 
 
-
 // 3. PUT /orders/:id - Update de status van een bestelling, vb naar "In productie" of "Verzonden". Alleen toegankelijk voor admins.
-router.put('/orders/:id', auth, adminAuth, async (req, res) => {
+router.put('/orders/:id', auth, adminAuth, [
+  check('status').isIn(['In productie', 'Verzonden', 'Geannuleerd']).withMessage('Invalid status value')
+], async (req, res) => {
+  // Controleer op validatiefouten
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ status: 'fail', data: errors.array() });
+  }
+
   try {
     const order = await Order.findByIdAndUpdate(
       req.params.id,
@@ -67,7 +75,7 @@ router.put('/orders/:id', auth, adminAuth, async (req, res) => {
       { new: true }
     );
     if (!order) {
-      return res.status(404).json({ status: 'error', message: 'Order not found' });
+      return res.status(404).json({ status: 'fail', message: 'Order not found' });
     }
     res.status(200).json({ status: 'success', data: order });
   } catch (error) {

@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const User = require('../../../models/api/v1/userModel'); // Zorg ervoor dat dit pad klopt
 const { auth } = require('../../../middleware/auth'); // Zorg dat het pad naar auth correct is
 
+
 // Registratieroute om een nieuwe gebruiker toe te voegen
 router.post('/register', async (req, res) => {
   const { name, email, password, isAdmin } = req.body;
@@ -29,9 +30,9 @@ router.post('/register', async (req, res) => {
     });
 
     await user.save();
-    res.status(201).json({ status: 'success', message: 'User registered successfully' });
+    res.status(201).json({ status: 'success', message: 'Gebruiker succesvol geregistreerd' });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
+    res.status(500).json({ status: 'error', message: 'Serverfout bij registratie', error: error.message });
   }
 });
 
@@ -42,11 +43,11 @@ router.post('/login', async (req, res) => {
   try {
     // Zoek de gebruiker op basis van e-mail
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ status: 'fail', message: 'User not found' });
+    if (!user) return res.status(400).json({ status: 'fail', message: 'Gebruiker niet gevonden' });
 
     // Controleer het wachtwoord
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ status: 'fail', message: 'Invalid credentials' });
+    if (!isMatch) return res.status(400).json({ status: 'fail', message: 'Ongeldige inloggegevens' });
 
     // Genereer de JWT-token
     const token = jwt.sign(
@@ -57,7 +58,7 @@ router.post('/login', async (req, res) => {
 
     res.json({ status: 'success', data: { token } });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
+    res.status(500).json({ status: 'error', message: 'Serverfout bij inloggen', error: error.message });
   }
 });
 
@@ -67,19 +68,19 @@ router.put('/change-password', auth, async (req, res) => {
 
   try {
     const user = await User.findById(req.user.userId);
-    if (!user) return res.status(404).json({ status: 'fail', message: 'User not found' });
+    if (!user) return res.status(404).json({ status: 'fail', message: 'Gebruiker niet gevonden' });
 
     // Controleer of het oude wachtwoord klopt
     const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) return res.status(400).json({ status: 'fail', message: 'Incorrect old password' });
+    if (!isMatch) return res.status(400).json({ status: 'fail', message: 'Ongeldig oud wachtwoord' });
 
     // Update naar het nieuwe wachtwoord
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
-    res.status(200).json({ status: 'success', message: 'Password updated successfully' });
+    res.status(200).json({ status: 'success', message: 'Wachtwoord succesvol bijgewerkt' });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
+    res.status(500).json({ status: 'error', message: 'Serverfout bij wachtwoord wijzigen', error: error.message });
   }
 });
 

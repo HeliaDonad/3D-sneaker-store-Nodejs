@@ -15,3 +15,10 @@ In terminal:
 database
     username: adlin
     password: SedaHelia1478
+
+
+installeren
+$ npm install jsonwebtoken
+$ npm install bcryptjs
+$ npm install dotenv
+$ npm install express-validator

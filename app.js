@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 require('dotenv').config();
 const User = require('./models/api/v1/userModel'); // Zorg dat het pad naar userModel correct is
-const bcrypt = require('bcrypt');
+// const bcrypt = require('bcrypt');
 
 // Configuratie en middleware toevoegen
 app.use(express.json());

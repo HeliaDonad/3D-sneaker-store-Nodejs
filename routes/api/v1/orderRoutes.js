@@ -3,8 +3,9 @@ const router = express.Router();
 const Order = require('../../../models/api/v1/orderModel'); 
 const { auth, adminAuth } = require('../../../middleware/auth');
 const { check, validationResult } = require('express-validator');
+const mongoose = require('mongoose');
 
-// 1. POST /orders - Een nieuwe bestelling toevoegen met configuratiegegevens zoals kleur, maat en contactinformatie.
+// 1. POST /orders - Voeg een nieuwe bestelling toe
 router.post('/orders', auth, [
   check('color').notEmpty().withMessage('Color is required'),
   check('size').isInt({ min: 30, max: 50 }).withMessage('Size must be a number between 30 and 50'),
@@ -21,25 +22,21 @@ router.post('/orders', auth, [
     const newOrder = new Order({
       color: req.body.color,
       size: req.body.size,
-      contactInfo: {
-        name: req.body.contactInfo.name,
-        email: req.body.contactInfo.email,
-        phone: req.body.contactInfo.phone,
-      },
-      status: req.body.status || 'In productie'
+      contactInfo: req.body.contactInfo,
+      status: req.body.status || 'In productie',
     });
+
+    console.log('Saving new order:', newOrder); // Debug logging
 
     await newOrder.save();
     res.status(201).json({ status: 'success', data: newOrder });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
+    console.error('Error saving order:', error); // Debug logging
+    res.status(500).json({ status: 'error', message: 'Failed to save order', error: error.message });
   }
 });
 
-
-// 2. DELETE /orders/:id - Verwijdert een bestelling, alleen toegankelijk voor admins.
-const mongoose = require('mongoose');
-
+// 2. DELETE /orders/:id - Verwijder een bestelling
 router.delete('/orders/:id', auth, adminAuth, async (req, res) => {
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     return res.status(400).json({ status: 'fail', message: 'Invalid ID format' });
@@ -51,18 +48,19 @@ router.delete('/orders/:id', auth, adminAuth, async (req, res) => {
       return res.status(404).json({ status: 'fail', message: 'Order not found' });
     }
 
+    console.log('Order deleted:', order); // Debug logging
+
     res.status(200).json({ status: 'success', data: null });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
+    console.error('Error deleting order:', error); // Debug logging
+    res.status(500).json({ status: 'error', message: 'Failed to delete order', error: error.message });
   }
 });
 
-
-// 3. PUT /orders/:id - Update de status van een bestelling, vb naar "In productie" of "Verzonden". Alleen toegankelijk voor admins.
+// 3. PUT /orders/:id - Update de status van een bestelling
 router.put('/orders/:id', auth, adminAuth, [
-  check('status').isIn(['In productie', 'Verzonden', 'Geannuleerd']).withMessage('Invalid status value')
+  check('status').isIn(['In productie', 'Verzonden', 'Geannuleerd']).withMessage('Invalid status value'),
 ], async (req, res) => {
-  // Controleer op validatiefouten
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ status: 'fail', data: errors.array() });
@@ -77,33 +75,49 @@ router.put('/orders/:id', auth, adminAuth, [
     if (!order) {
       return res.status(404).json({ status: 'fail', message: 'Order not found' });
     }
+
+    console.log('Order updated:', order); // Debug logging
+
     res.status(200).json({ status: 'success', data: order });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
+    console.error('Error updating order:', error); // Debug logging
+    res.status(500).json({ status: 'error', message: 'Failed to update order', error: error.message });
   }
 });
 
-// 4. GET /orders/:id - Haal details van een specifieke bestelling op
+// 4. GET /orders/:id - Haal een specifieke bestelling op
 router.get('/orders/:id', auth, async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ status: 'fail', message: 'Invalid ID format' });
+  }
+
   try {
     const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ status: 'error', message: 'Order not found' });
+    if (!order) {
+      return res.status(404).json({ status: 'fail', message: 'Order not found' });
+    }
+
+    console.log('Order fetched:', order); // Debug logging
+
     res.status(200).json({ status: 'success', data: order });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
+    console.error('Error fetching order:', error); // Debug logging
+    res.status(500).json({ status: 'error', message: 'Failed to fetch order', error: error.message });
   }
 });
 
-
-// 5. GET /orders - Haal alle bestellingen op met sorteeroptie
+// 5. GET /orders - Haal alle bestellingen op
 router.get('/orders', auth, async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 });
+
+    console.log('All orders fetched:', orders.length); // Debug logging
+
     res.status(200).json({ status: 'success', data: orders });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
+    console.error('Error fetching orders:', error); // Debug logging
+    res.status(500).json({ status: 'error', message: 'Failed to fetch orders', error: error.message });
   }
 });
-
 
 module.exports = router;

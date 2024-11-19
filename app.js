@@ -4,22 +4,22 @@ const app = express();
 require('dotenv').config();
 const User = require('./models/api/v1/userModel'); // Zorg dat het pad naar userModel correct is
 const bcrypt = require('bcryptjs');
-const allowedOrigins = [
-  'http://localhost:5173', // Frontend tijdens ontwikkeling
-  'https://threed-sneaker-store-seda-ezzat-helia.onrender.com', // Productie
-];
+const allowedOrigins = ['http://localhost:5173', 'https://threed-sneaker-store-seda-ezzat-helia.onrender.com'];
+
 // Configuratie en middleware toevoegen
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Controleer of de origin in de toegestane lijst staat
+    if (allowedOrigins.includes(origin) || !origin) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Toegestane HTTP-methoden
+  allowedHeaders: ['Content-Type', 'Authorization'], // Toegestane headers
 }));
+
 // Configuratie en middleware toevoegen
 app.use(express.json());
 

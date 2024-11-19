@@ -106,13 +106,13 @@ router.put('/change-password', auth, async (req, res) => {
 // Dashboard Route
 router.get('/dashboard', auth, async (req, res) => {
   try {
-    // 1. Haal de gebruiker op met de userId uit de token
+    // 1. Haal de ingelogde gebruiker op met de userId uit de token
     const user = await User.findById(req.user.userId).select('-password'); // Excludeer het wachtwoord
     if (!user) {
       return res.status(404).json({ status: 'fail', message: 'Gebruiker niet gevonden' });
     }
 
-    // 2. Haal bestellingen van de gebruiker op
+    // 2. Haal bestellingen van de gebruiker op, gefilterd op e-mailadres
     const orders = await Order.find({ 'contactInfo.email': user.email });
 
     // 3. Stuur de gebruiker en zijn bestellingen terug
@@ -128,5 +128,6 @@ router.get('/dashboard', auth, async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Kon dashboardgegevens niet ophalen', error: error.message });
   }
 });
+
 
 module.exports = router;

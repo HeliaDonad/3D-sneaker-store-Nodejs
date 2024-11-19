@@ -53,4 +53,18 @@ const optionalAuth = (req, res, next) => {
   next();
 };
 
+exports.auth = (req, res, next) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  if (!token) {
+    return res.status(401).json({ status: 'fail', message: 'Toegang geweigerd: Geen token verstrekt.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Decode de token
+    req.user = decoded; // Voeg de gebruiker toe aan de request
+    next(); // Ga naar de volgende middleware of route
+  } catch (error) {
+    res.status(400).json({ status: 'fail', message: 'Ongeldige token.' });
+  }
+};
 module.exports = { auth, adminAuth, roleAuth, optionalAuth };

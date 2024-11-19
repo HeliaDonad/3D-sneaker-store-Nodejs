@@ -3,7 +3,7 @@ const cors = require('cors'); // Importeer cors
 const app = express();
 require('dotenv').config();
 const User = require('./models/api/v1/userModel'); // Zorg dat het pad naar userModel correct is
-// const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const allowedOrigins = ['https://threed-sneaker-store-seda-ezzat-helia.onrender.com'];
 
 // Configuratie en middleware toevoegen

@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { check, validationResult } = require('express-validator');
 const User = require('../../../models/api/v1/userModel'); // Controleer paden
+const Order = require('../../../models/api/v1/orderModel'); // Controleer paden
 const { auth } = require('../../../middleware/auth'); // Controleer paden
 
 // Registratieroute
@@ -33,7 +34,7 @@ router.post(
         name,
         email,
         password: hashedPassword,
-        isAdmin: isAdmin || false,
+        isAdmin: isAdmin || false, // Zorg dat isAdmin standaard false is
       });
 
       await user.save();
@@ -77,6 +78,10 @@ router.post('/login', async (req, res) => {
 router.put('/change-password', auth, async (req, res) => {
   const { oldPassword, newPassword } = req.body;
 
+  if (!oldPassword || !newPassword) {
+    return res.status(400).json({ status: 'fail', message: 'Oud en nieuw wachtwoord zijn verplicht' });
+  }
+
   try {
     const user = await User.findById(req.user.userId);
     if (!user) {
@@ -95,6 +100,32 @@ router.put('/change-password', auth, async (req, res) => {
   } catch (error) {
     console.error('Error bij wachtwoord wijzigen:', error);
     res.status(500).json({ status: 'error', message: 'Serverfout bij wachtwoord wijzigen', error: error.message });
+  }
+});
+
+// Dashboard Route
+router.get('/dashboard', auth, async (req, res) => {
+  try {
+    // 1. Haal de gebruiker op met de userId uit de token
+    const user = await User.findById(req.user.userId).select('-password'); // Excludeer het wachtwoord
+    if (!user) {
+      return res.status(404).json({ status: 'fail', message: 'Gebruiker niet gevonden' });
+    }
+
+    // 2. Haal bestellingen van de gebruiker op
+    const orders = await Order.find({ 'contactInfo.email': user.email });
+
+    // 3. Stuur de gebruiker en zijn bestellingen terug
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user,
+        orders,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    res.status(500).json({ status: 'error', message: 'Kon dashboardgegevens niet ophalen', error: error.message });
   }
 });
 

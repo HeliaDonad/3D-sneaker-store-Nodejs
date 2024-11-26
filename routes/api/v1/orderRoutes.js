@@ -199,13 +199,21 @@ router.post('/orders/:orderId/items', auth, async (req, res) => {
 
 // 8. POST /orders/:orderId/checkout - Place the order (finalize it)
 router.post('/orders/:orderId/checkout', auth, async (req, res) => {
+  const orderId = req.params.orderId;  // The orderId comes from the URL parameter
+  
+  // Ensure that orderId is a valid MongoDB ObjectId
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    return res.status(400).json({ status: 'fail', message: 'Invalid order ID format' });
+  }
+
   try {
-    const order = await Order.findById(req.params.orderId);
+    // Find the order using the valid ObjectId
+    const order = await Order.findById(orderId);
     if (!order) {
       return res.status(404).json({ status: 'fail', message: 'Order not found' });
     }
 
-    // Update the status to 'Placed' (or any other final status you want)
+    // Update the status of the order to "Placed"
     order.status = 'Placed';
     await order.save();
 
@@ -215,5 +223,6 @@ router.post('/orders/:orderId/checkout', auth, async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Failed to place order', error: error.message });
   }
 });
+
 
 module.exports = router;

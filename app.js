@@ -19,7 +19,7 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Toegestane HTTP-methoden
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Toegestane HTTP-methoden
   allowedHeaders: ['Content-Type', 'Authorization'], // Toegestane headers
 }));
 
@@ -37,6 +37,9 @@ app.use('/api/v1', orderRoutes);
 
 const userRoutes = require('./routes/api/v1/UserRoutes');
 app.use('/api/v1', userRoutes);
+
+const openaiRoutes = require('./routes/api/v1/openai');
+app.use('/api/v1/openai', openaiRoutes);
 
 const createAdminUser = async () => {
   try {

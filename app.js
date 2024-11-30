@@ -5,6 +5,9 @@ require('dotenv').config();
 const User = require('./models/api/v1/userModel'); // Zorg dat het pad naar userModel correct is
 const bcrypt = require('bcryptjs');
 const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'https://threed-sneaker-store-seda-ezzat-helia.onrender.com'];
+const openaiRoutes = require('./routes/api/v1/openaiRoutes'); // Zorg dat het pad klopt
+
+app.use('/api/v1/openai', openaiRoutes);
 
 // Configuratie en middleware toevoegen
 app.use(cors({

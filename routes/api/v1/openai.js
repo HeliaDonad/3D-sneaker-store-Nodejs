@@ -3,7 +3,7 @@ const { Configuration, OpenAIApi } = require('openai');
 const router = express.Router();
 
 const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY, // Zorg ervoor dat deze in je .env-bestand staat
+    apiKey: process.env.OPENAI_API_KEY, 
 });
 const openai = new OpenAIApi(configuration);
 
@@ -12,6 +12,7 @@ router.post('/generate-image', async (req, res) => {
         const { prompt } = req.body;
 
         if (!prompt) {
+            console.error("Prompt is missing");
             return res.status(400).json({ error: 'Geen prompt meegegeven.' });
         }
 
@@ -21,6 +22,7 @@ router.post('/generate-image', async (req, res) => {
             size: '1024x1024',
             response_format: 'b64_json',
         });
+        console.log("OpenAI response:", response.data);
 
         const image = response.data.data[0].b64_json;
         res.json({ image });

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Order = require('../../../models/api/v1/orderModel');
-const { auth } = require('../../../middleware/auth'); // Import auth middleware
+const { auth } = require('../../../middleware/auth'); // Middleware for authentication
 const { check, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 
@@ -18,9 +18,10 @@ router.post('/orders', auth, [
 
   try {
     const newOrder = new Order({
+      userId: req.user.userId, // Koppel de bestelling aan de ingelogde gebruiker
       contactInfo: req.body.contactInfo,
       status: req.body.status || 'In productie',
-      items: req.body.items || []  // Items come from the request body
+      items: req.body.items || []  // Items komen uit de request body
     });
 
     console.log('Saving new order:', newOrder); // Debug logging
@@ -34,7 +35,7 @@ router.post('/orders', auth, [
 
 // 2. DELETE /orders/:id - Verwijder een bestelling
 router.delete('/orders/:id', auth, async (req, res) => {
-  // Only allow admins to delete orders
+  // Alleen admins mogen bestellingen verwijderen
   if (!req.user.isAdmin) {
     return res.status(403).json({ status: 'fail', message: 'Access Denied: Admins Only' });
   }
@@ -50,7 +51,6 @@ router.delete('/orders/:id', auth, async (req, res) => {
     }
 
     console.log('Order deleted:', order); // Debug logging
-
     res.status(200).json({ status: 'success', data: null });
   } catch (error) {
     console.error('Error deleting order:', error); // Debug logging
@@ -60,14 +60,9 @@ router.delete('/orders/:id', auth, async (req, res) => {
 
 // 3. PUT /orders/:id - Update de status van een bestelling
 router.put('/orders/:id', auth, async (req, res) => {
-  // Only allow admins to update order status
+  // Alleen admins mogen de status van een bestelling bijwerken
   if (!req.user.isAdmin) {
     return res.status(403).json({ status: 'fail', message: 'Access Denied: Admins Only' });
-  }
-
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ status: 'fail', data: errors.array() });
   }
 
   try {
@@ -81,7 +76,6 @@ router.put('/orders/:id', auth, async (req, res) => {
     }
 
     console.log('Order updated:', order); // Debug logging
-
     res.status(200).json({ status: 'success', data: order });
   } catch (error) {
     console.error('Error updating order:', error); // Debug logging
@@ -125,7 +119,6 @@ router.patch('/orders/:orderId/items/:itemId', auth, async (req, res) => {
 
     // Save the updated order
     await order.save();
-
     res.status(200).json({ status: 'success', data: order });
   } catch (error) {
     console.error('Error updating order item:', error);
@@ -140,13 +133,12 @@ router.get('/orders/:id', auth, async (req, res) => {
   }
 
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate('userId', 'name email'); // Voeg gebruikersinfo toe
     if (!order) {
       return res.status(404).json({ status: 'fail', message: 'Order not found' });
     }
 
     console.log('Order fetched:', order); // Debug logging
-
     res.status(200).json({ status: 'success', data: order });
   } catch (error) {
     console.error('Error fetching order:', error); // Debug logging
@@ -157,10 +149,11 @@ router.get('/orders/:id', auth, async (req, res) => {
 // 6. GET /orders - Haal alle bestellingen op
 router.get('/orders', auth, async (req, res) => {
   try {
-    const orders = await Order.find().sort({ createdAt: -1 });
+    const orders = await Order.find()
+      .populate('userId', 'name email') // Voeg gebruikersinfo toe
+      .sort({ createdAt: -1 });
 
     console.log('All orders fetched:', orders.length); // Debug logging
-
     res.status(200).json({ status: 'success', data: orders });
   } catch (error) {
     console.error('Error fetching orders:', error); // Debug logging
@@ -168,61 +161,15 @@ router.get('/orders', auth, async (req, res) => {
   }
 });
 
-// 7. POST /orders/:orderId/items - Add an item to an existing order (shopping bag)
-router.post('/orders/:orderId/items', auth, async (req, res) => {
-  const { size, quantity } = req.body;
-
-  // Validate size and quantity
-  if (size < 30 || size > 50) {
-    return res.status(400).json({ status: 'fail', message: 'Size must be between 30 and 50' });
-  }
-  if (quantity <= 0) {
-    return res.status(400).json({ status: 'fail', message: 'Quantity must be greater than 0' });
-  }
-
+// 7. GET /orders/user - Haal bestellingen op voor de ingelogde gebruiker
+router.get('/orders/user', auth, async (req, res) => {
   try {
-    const order = await Order.findById(req.params.orderId);
-    if (!order) {
-      return res.status(404).json({ status: 'fail', message: 'Order not found' });
-    }
-
-    // Add the item to the order
-    order.items.push({ size, quantity });
-    await order.save();
-
-    res.status(201).json({ status: 'success', data: order });
+    const orders = await Order.find({ userId: req.user.userId });
+    res.status(200).json({ status: 'success', data: orders });
   } catch (error) {
-    console.error('Error adding item:', error);
-    res.status(500).json({ status: 'error', message: 'Failed to add item to order', error: error.message });
+    console.error('Error fetching user orders:', error); // Debug logging
+    res.status(500).json({ status: 'error', message: 'Failed to fetch user orders', error: error.message });
   }
 });
-
-// 8. POST /orders/:orderId/checkout - Place the order (finalize it)
-router.post('/orders/:orderId/checkout', auth, async (req, res) => {
-  const orderId = req.params.orderId;  // The orderId comes from the URL parameter
-  
-  // Ensure that orderId is a valid MongoDB ObjectId
-  if (!mongoose.Types.ObjectId.isValid(orderId)) {
-    return res.status(400).json({ status: 'fail', message: 'Invalid order ID format' });
-  }
-
-  try {
-    // Find the order using the valid ObjectId
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ status: 'fail', message: 'Order not found' });
-    }
-
-    // Update the status of the order to "Placed"
-    order.status = 'Placed';
-    await order.save();
-
-    res.status(200).json({ status: 'success', data: order });
-  } catch (error) {
-    console.error('Error placing order:', error);
-    res.status(500).json({ status: 'error', message: 'Failed to place order', error: error.message });
-  }
-});
-
 
 module.exports = router;

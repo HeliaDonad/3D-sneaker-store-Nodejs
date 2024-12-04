@@ -68,7 +68,7 @@ router.post('/login', async (req, res) => {
     );
 
     // Bepaal de redirect URL op basis van de adminstatus
-    const redirectTo = user.isAdmin ? '/orders' : '/dashboard';
+    const redirectTo = user.isAdmin ? '/admin' : '/dashboard';
 
     res.json({ status: 'success', data: { token, redirectTo } });
   } catch (error) {

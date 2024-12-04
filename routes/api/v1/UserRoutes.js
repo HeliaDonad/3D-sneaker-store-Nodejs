@@ -13,7 +13,7 @@ router.post(
   [
     check('name').notEmpty().withMessage('Naam is verplicht'),
     check('email').isEmail().withMessage('Ongeldig e-mailadres'),
-    check('password').isLength({ min: 6 }).withMessage('Wachtwoord moet minstens 6 tekens lang zijn'),
+    check('password').isLength({ min: 5 }).withMessage('Wachtwoord moet minstens 5 tekens lang zijn'),
   ],
   async (req, res) => {
     const errors = validationResult(req);

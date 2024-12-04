@@ -6,24 +6,28 @@ const { check, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 
 // 1. POST /orders - Voeg een nieuwe bestelling toe
-router.post('/orders', auth, async (req, res) => {
-  try {
-    const userId = req.user.userId; // Verkrijg user ID van de ingelogde gebruiker via auth middleware
+router.post('/orders', auth, [
+  check('contactInfo.name').notEmpty().withMessage('Name is required'),
+  check('contactInfo.email').isEmail().withMessage('Valid email is required'),
+  check('items').isArray().withMessage('Items must be an array of objects')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ status: 'fail', data: errors.array() });
+  }
 
+  try {
     const newOrder = new Order({
-      userId, // Koppel bestelling aan de gebruiker
-      contactInfo: {
-        name: req.user.name, // Gebruik naam van de ingelogde gebruiker
-        email: req.user.email, // Gebruik e-mail van de ingelogde gebruiker
-      },
+      contactInfo: req.body.contactInfo,
       status: req.body.status || 'In productie',
-      items: req.body.items || [], // Items van de bestelling
+      items: req.body.items || []  // Items come from the request body
     });
 
+    console.log('Saving new order:', newOrder); // Debug logging
     await newOrder.save();
     res.status(201).json({ status: 'success', data: newOrder });
   } catch (error) {
-    console.error('Error saving order:', error);
+    console.error('Error saving order:', error); // Debug logging
     res.status(500).json({ status: 'error', message: 'Failed to save order', error: error.message });
   }
 });

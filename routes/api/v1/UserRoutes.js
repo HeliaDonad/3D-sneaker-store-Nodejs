@@ -21,7 +21,7 @@ router.post(
       return res.status(400).json({ status: 'fail', errors: errors.array() });
     }
 
-    const { name, email, password, isAdmin } = req.body;
+    const { name, email, password } = req.body;
 
     try {
       const existingUser = await User.findOne({ email });
@@ -34,7 +34,7 @@ router.post(
         name,
         email,
         password: hashedPassword,
-        isAdmin: isAdmin || false, // Zorg dat isAdmin standaard false is
+        isAdmin: false, // Nieuwe gebruikers zijn standaard geen admin
       });
 
       await user.save();
@@ -67,7 +67,10 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1h' }
     );
 
-    res.json({ status: 'success', data: { token } });
+    // Bepaal de redirect URL op basis van de adminstatus
+    const redirectTo = user.isAdmin ? '/orders' : '/dashboard';
+
+    res.json({ status: 'success', data: { token, redirectTo } });
   } catch (error) {
     console.error('Error bij inloggen:', error);
     res.status(500).json({ status: 'error', message: 'Serverfout bij inloggen', error: error.message });
@@ -106,16 +109,13 @@ router.put('/change-password', auth, async (req, res) => {
 // Dashboard Route
 router.get('/dashboard', auth, async (req, res) => {
   try {
-    // 1. Haal de ingelogde gebruiker op met de userId uit de token
     const user = await User.findById(req.user.userId).select('-password'); // Excludeer het wachtwoord
     if (!user) {
       return res.status(404).json({ status: 'fail', message: 'Gebruiker niet gevonden' });
     }
 
-    // 2. Haal bestellingen van de gebruiker op, gefilterd op e-mailadres
     const orders = await Order.find({ 'contactInfo.email': user.email });
 
-    // 3. Stuur de gebruiker en zijn bestellingen terug
     res.status(200).json({
       status: 'success',
       data: {
@@ -128,6 +128,5 @@ router.get('/dashboard', auth, async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Kon dashboardgegevens niet ophalen', error: error.message });
   }
 });
-
 
 module.exports = router;

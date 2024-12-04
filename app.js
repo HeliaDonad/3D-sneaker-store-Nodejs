@@ -37,7 +37,7 @@ app.use('/api/v1', userRoutes);
 
 const createAdminUser = async () => {
   try {
-    const adminEmail = 'admin@example.com';
+    const adminEmail = 'admin@admin.com';
     const existingAdmin = await User.findOne({ email: adminEmail });
 
     if (!existingAdmin) {

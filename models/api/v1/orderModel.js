@@ -9,7 +9,6 @@ const itemSchema = new mongoose.Schema({
 
 // Define the main order schema
 const orderSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' }, // Associated user
   items: { type: [itemSchema], required: true }, // Array of items in the order
   contactInfo: {
     name: { type: String, required: true }, // Name of the person placing the order

@@ -41,23 +41,22 @@ const createAdminUser = async () => {
     const existingAdmin = await User.findOne({ email: adminEmail });
 
     if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash('Admin', 10); // Correcte wachtwoord: 'Admin'
+      const hashedPassword = await bcrypt.hash('Admin', 10); // Wachtwoord 'Admin' wordt gehasht
       const adminUser = new User({
         name: 'Admin',
         email: adminEmail,
         password: hashedPassword,
-        isAdmin: true
+        isAdmin: true,
       });
       await adminUser.save();
-      console.log('Admin user created successfully');
+      console.log('Admin user created successfully with email:', adminEmail);
     } else {
-      console.log('Admin user already exists');
+      console.log('Admin user already exists with email:', adminEmail);
     }
   } catch (error) {
     console.error('Error creating admin user:', error.message);
   }
 };
-
 
 connectDB(); // Start de verbinding met MongoDB
 createAdminUser();

@@ -25,7 +25,6 @@ router.post('/login', async (req, res) => {
 
     // Controleer of de gebruiker de admin is
     if (email === 'admin@admin.com' && user.isAdmin) {
-      // Genereer een JWT-token
       const token = jwt.sign(
         { userId: user._id, isAdmin: true },
         process.env.JWT_SECRET,
@@ -75,16 +74,13 @@ router.put('/change-password', auth, async (req, res) => {
 // Dashboard Route
 router.get('/dashboard', auth, async (req, res) => {
   try {
-    // Haal de ingelogde gebruiker op
     const user = await User.findById(req.user.userId).select('-password'); // Excludeer het wachtwoord
     if (!user) {
       return res.status(404).json({ status: 'fail', message: 'Gebruiker niet gevonden' });
     }
 
-    // Haal bestellingen van de gebruiker op
     const orders = await Order.find({ 'contactInfo.email': user.email });
 
-    // Stuur gebruiker en bestellingen terug
     res.status(200).json({
       status: 'success',
       data: {

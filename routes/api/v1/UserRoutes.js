@@ -11,17 +11,21 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    // Zoek de gebruiker in de database
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ status: 'fail', message: 'Gebruiker niet gevonden' });
     }
 
+    // Controleer of het wachtwoord klopt
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ status: 'fail', message: 'Ongeldige inloggegevens' });
     }
 
+    // Controleer of de gebruiker de admin is
     if (email === 'admin@admin.com' && user.isAdmin) {
+      // Genereer een JWT-token
       const token = jwt.sign(
         { userId: user._id, isAdmin: true },
         process.env.JWT_SECRET,
@@ -51,11 +55,13 @@ router.put('/change-password', auth, async (req, res) => {
       return res.status(404).json({ status: 'fail', message: 'Gebruiker niet gevonden' });
     }
 
+    // Controleer het oude wachtwoord
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
       return res.status(400).json({ status: 'fail', message: 'Ongeldig oud wachtwoord' });
     }
 
+    // Update naar het nieuwe wachtwoord
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
@@ -69,16 +75,16 @@ router.put('/change-password', auth, async (req, res) => {
 // Dashboard Route
 router.get('/dashboard', auth, async (req, res) => {
   try {
-    // 1. Haal de ingelogde gebruiker op met de userId uit de token
+    // Haal de ingelogde gebruiker op
     const user = await User.findById(req.user.userId).select('-password'); // Excludeer het wachtwoord
     if (!user) {
       return res.status(404).json({ status: 'fail', message: 'Gebruiker niet gevonden' });
     }
 
-    // 2. Haal bestellingen van de gebruiker op, gefilterd op e-mailadres
+    // Haal bestellingen van de gebruiker op
     const orders = await Order.find({ 'contactInfo.email': user.email });
 
-    // 3. Stuur de gebruiker en zijn bestellingen terug
+    // Stuur gebruiker en bestellingen terug
     res.status(200).json({
       status: 'success',
       data: {

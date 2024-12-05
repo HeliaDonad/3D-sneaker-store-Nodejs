@@ -13,13 +13,13 @@ const {
 } = require('../../../controllers/api/v1/orderControllers');
 
 // Routes
-router.post('/orders', auth, createOrder); // Maak een bestelling
-router.delete('/orders/:id', auth, adminAuth, deleteOrder); // Verwijder een bestelling
-router.put('/orders/:id', auth, adminAuth, updateOrderStatus); // Update status
-router.get('/orders/:id', auth, getOrderById); // Haal een specifieke bestelling op
-router.get('/orders', auth, getAllOrders); // Haal alle bestellingen op
-router.post('/orders/:orderId/items', auth, addItemToOrder); // Voeg een item toe
-router.patch('/orders/:orderId/items/:itemId', auth, updateOrderItem); // Update een item
-router.post('/orders/:orderId/checkout', auth, checkoutOrder); // Finaliseer een bestelling
+router.post('/', auth, createOrder); // POST /api/v1/orders
+router.delete('/:id', auth, adminAuth, deleteOrder); // DELETE /api/v1/orders/:id
+router.put('/:id', auth, adminAuth, updateOrderStatus); // PUT /api/v1/orders/:id
+router.get('/:id', auth, getOrderById); // GET /api/v1/orders/:id
+router.get('/', auth, getAllOrders); // GET /api/v1/orders
+router.post('/:orderId/items', auth, addItemToOrder); // POST /api/v1/orders/:orderId/items
+router.patch('/:orderId/items/:itemId', auth, updateOrderItem); // PATCH /api/v1/orders/:orderId/items/:itemId
+router.post('/:orderId/checkout', auth, checkoutOrder); // POST /api/v1/orders/:orderId/checkout
 
 module.exports = router;

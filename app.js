@@ -40,9 +40,13 @@ if (process.env.NODE_ENV === 'development') {
 // Routes importeren
 const orderRoutes = require('./routes/api/v1/orderRoutes');
 const userRoutes = require('./routes/api/v1/UserRoutes');
+const productRoutes = require('./routes/api/v1/productRoutes');
+
 // Routes koppelen
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/products', productRoutes);
+
 
 app.get('/', (req, res) => res.send('Welcome to the 3D Configurator API'));
 

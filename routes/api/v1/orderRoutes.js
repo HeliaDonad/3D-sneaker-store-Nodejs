@@ -13,7 +13,7 @@ const {
 } = require('../../../controllers/api/v1/orderControllers');
 
 // Routes voor bestellingen
-router.post('/', auth, createOrder); // POST /api/v1/orders
+router.post('/', createOrder); // POST /api/v1/orders
 router.delete('/:id', auth, adminAuth, deleteOrder); // DELETE /api/v1/orders/:id
 router.put('/:id', auth, adminAuth, updateOrderStatus); // PUT /api/v1/orders/:id
 router.get('/:id', auth, getOrderById); // GET /api/v1/orders/:id

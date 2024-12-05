@@ -1,65 +1,71 @@
 const express = require('express');
-const cors = require('cors'); // Importeer cors
-const app = express();
+const cors = require('cors');
+const morgan = require('morgan');
 require('dotenv').config();
-const User = require('./models/api/v1/userModel'); // Zorg dat het pad naar userModel correct is
-const bcrypt = require('bcryptjs');
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'https://threed-sneaker-store-seda-ezzat-helia.onrender.com'];
+const connectDB = require('./config/db');
 
-// Configuratie en middleware toevoegen
+// Express-app initialiseren
+const app = express();
+
+// Middleware toevoegen
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://threed-sneaker-store-seda-ezzat-helia.onrender.com',
+];
+
+if (!process.env.ALLOWED_ORIGINS) {
+  console.warn('ALLOWED_ORIGINS is not set. Using default origins:', allowedOrigins);
+}
+
 app.use(cors({
   origin: function (origin, callback) {
-    // Controleer of de origin in de toegestane lijst staat
     if (allowedOrigins.includes(origin) || !origin) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Toegestane HTTP-methoden
-  allowedHeaders: ['Content-Type', 'Authorization'], // Toegestane headers
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-
-// Configuratie en middleware toevoegen
 app.use(express.json());
 
-const connectDB = require('./config/db');
-app.get('/', (req, res) => {
-  res.send('Welcome to the 3D Configurator API');
-});
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+} else {
+  app.use(morgan('combined'));
+}
 
+// Routes importeren
 const orderRoutes = require('./routes/api/v1/orderRoutes');
-app.use('/api/v1', orderRoutes);
+const userRoutes = require('./routes/api/v1/userRoutes');
 
-
-const userRoutes = require('./routes/api/v1/UserRoutes');
-app.use('/api/v1', userRoutes);
-
-const createAdminUser = async () => {
-  try {
-    const adminEmail = 'admin@admin.com';
-    const existingAdmin = await User.findOne({ email: adminEmail });
-
-    if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash('Admin', 10); // Wachtwoord 'Admin' wordt gehasht
-      const adminUser = new User({
-        name: 'Admin',
-        email: adminEmail,
-        password: hashedPassword,
-        isAdmin: true,
-      });
-      await adminUser.save();
-      console.log('Admin user created successfully with email:', adminEmail);
-    } else {
-      console.log('Admin user already exists with email:', adminEmail);
-    }
-  } catch (error) {
-    console.error('Error creating admin user:', error.message);
-  }
+// Routes koppelen
+const setupRoutes = (app) => {
+  app.use('/api/v1/orders', orderRoutes);
+  app.use('/api/v1/users', userRoutes);
+  app.get('/', (req, res) => res.send('Welcome to the 3D Configurator API'));
 };
 
-connectDB(); // Start de verbinding met MongoDB
-createAdminUser();
+setupRoutes(app);
 
-// Exporteer `app` zodat het kan worden gebruikt in `www`
+// Verbinden met de database
+connectDB();
+
+// Fallback voor niet-bestaande routes
+app.use((req, res) => {
+  res.status(404).json({ status: 'fail', message: 'Route not found' });
+});
+
+// Algemene foutafhandeling
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    status: 'error',
+    message: err.message || 'Internal Server Error',
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+  });
+});
+
 module.exports = app;

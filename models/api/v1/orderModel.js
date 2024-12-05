@@ -1,30 +1,26 @@
 const mongoose = require('mongoose');
 
-// Define the item schema for each product in the order
+// Item-schema voor elk product in de bestelling
 const itemSchema = new mongoose.Schema({
   productId: { 
     type: mongoose.Schema.Types.ObjectId, 
     required: true, 
-    ref: 'Product' // Ensure you have a Product model
+    ref: 'Product' 
   },
-  size: { 
-    type: Number, 
-    required: true, 
-    min: 36, 
-    max: 44 // Shoe size between 36 and 44
-  },
+  size: { type: Number, required: true, min: 36, max: 44 },
+  color: { type: String, required: false }, // Optionele kleur
   quantity: { 
     type: Number, 
     required: true, 
-    min: 1, 
+    min: 1,
     validate: {
       validator: Number.isInteger,
       message: '{VALUE} is not a valid quantity. Must be an integer.'
-    } // Quantity must be an integer
+    }
   }
 });
 
-// Define the main order schema
+// Hoofd-bestelschema
 const orderSchema = new mongoose.Schema({
   items: { 
     type: [itemSchema], 
@@ -34,36 +30,51 @@ const orderSchema = new mongoose.Schema({
         return items.length > 0;
       },
       message: 'An order must contain at least one item.'
-    } // Ensure the order has at least one item
+    }
   },
   contactInfo: {
-    name: { 
-      type: String, 
-      required: true, 
-      trim: true // Remove extra whitespace
-    },
+    name: { type: String, required: true, trim: true, minlength: 1 },
     email: { 
       type: String, 
       required: true, 
       match: /\S+@\S+\.\S+/,
-      lowercase: true // Always store emails in lowercase
+      lowercase: true 
     },
     phone: { 
       type: String, 
-      required: false, 
-      match: /^[0-9]{10,15}$/ // Optional: Add phone number validation
+      required: true, 
+      match: /^[0-9]{10,15}$/ 
     }
   },
   status: {
     type: String,
-    default: 'In productie', // Default status for an order
-    enum: ['In productie', 'Verzonden', 'Geannuleerd'] // Enum of valid statuses
+    default: 'In productie', 
+    enum: ['In productie', 'Verzonden', 'Geannuleerd'] 
   },
   totalAmount: {
     type: Number,
-    required: false, // Optionally calculate total amount
-    min: 0 // Amount must be positive
+    required: false, 
+    min: 0 
   }
 }, { timestamps: true });
+
+// Bereken automatisch het totaalbedrag
+orderSchema.pre('save', async function (next) {
+  if (this.isModified('items')) {
+    const productIds = this.items.map(item => item.productId);
+    const products = await mongoose.model('Product').find({ _id: { $in: productIds } });
+
+    let total = 0;
+    this.items.forEach(item => {
+      const product = products.find(p => p._id.toString() === item.productId.toString());
+      if (product) {
+        total += product.price * item.quantity;
+      }
+    });
+
+    this.totalAmount = total;
+  }
+  next();
+});
 
 module.exports = mongoose.model('Order', orderSchema);

@@ -29,9 +29,9 @@ const io = new Server(server, {
       'http://localhost:5174',
       'https://threed-sneaker-store-seda-ezzat-helia.onrender.com',
     ],
-        methods: ['GET', 'POST', 'PUT', 'DELETE'],
-      },
-    });
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Toegestane HTTP-methoden
+  },
+});
 
 // Socket.IO logic
 io.on('connection', (socket) => {
@@ -51,7 +51,9 @@ io.on('connection', (socket) => {
 /**
  * Listen on provided port, on all network interfaces.
  */
-server.listen(port);
+server.listen(port, () => {
+  console.log(`Server is running on port ${port}`); // Log dat de server luistert
+});
 server.on('error', onError);
 server.on('listening', onListening);
 

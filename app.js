@@ -42,21 +42,13 @@ const orderRoutes = require('./routes/api/v1/orderRoutes');
 const userRoutes = require('./routes/api/v1/UserRoutes');
 
 // Routes koppelen
-const setupRoutes = (app) => {
-  app.use('/api/v1/orders', orderRoutes);
-  app.use('/api/v1/users', userRoutes);
-  app.get('/', (req, res) => res.send('Welcome to the 3D Configurator API'));
-};
+app.use('/api/v1/orders', orderRoutes);
+app.use('/api/v1/users', userRoutes);
 
-setupRoutes(app);
+app.get('/', (req, res) => res.send('Welcome to the 3D Configurator API'));
 
 // Verbinden met de database
 connectDB();
-
-// Fallback voor niet-bestaande routes
-app.use((req, res) => {
-  res.status(404).json({ status: 'fail', message: 'Route not found' });
-});
 
 // Algemene foutafhandeling
 app.use((err, req, res, next) => {
@@ -68,4 +60,4 @@ app.use((err, req, res, next) => {
   });
 });
 
-module.exports = app;
+module.exports = app; // Alleen de Express-app exporteren

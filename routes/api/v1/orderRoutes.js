@@ -20,6 +20,6 @@ router.get('/:id', auth, getOrderById); // GET /api/v1/orders/:id
 router.get('/', auth, getAllOrders); // GET /api/v1/orders
 router.post('/:orderId/items', auth, addItemToOrder); // POST /api/v1/orders/:orderId/items
 router.patch('/:orderId/items/:itemId', auth, updateOrderItem); // PATCH /api/v1/orders/:orderId/items/:itemId
-router.post('/:orderId/checkout', auth, checkoutOrder); // POST /api/v1/orders/:orderId/checkout
+router.post('/:orderId/checkout', checkoutOrder); // POST /api/v1/orders/:orderId/checkout
 
 module.exports = router;

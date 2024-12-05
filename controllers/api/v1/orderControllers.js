@@ -2,61 +2,35 @@ const Order = require('../../../models/api/v1/orderModel');
 const mongoose = require('mongoose');
 
 // 1. Maak een bestelling
-const createOrder = async (req, res) => {
-    try {
-      // Log de volledige body van het request
-      console.log('Ontvangen request body:', req.body);
-  
-      // Destructure de benodigde velden uit de request body
-      const { contactInfo, items } = req.body;
-  
-      // Log de gedeconstrueerde velden om te zien wat ontbreekt
-      console.log('Contactinformatie:', contactInfo);
-      console.log('Items:', items);
-  
-      // Controleer of verplichte velden aanwezig zijn
-      if (
-        !contactInfo || 
-        !contactInfo.name || 
-        !contactInfo.email || 
-        !contactInfo.phone || 
-        !items || 
-        items.length === 0
-      ) {
-        console.log('Ontbrekende velden gedetecteerd:', {
-          contactInfo,
-          items,
-        }); // Debugging log
-  
-        return res.status(400).json({
-          status: 'fail',
-          message: 'Contactgegevens (naam, e-mail, telefoonnummer) en items zijn verplicht.',
-        });
-      }
-  
-      // Maak een nieuwe bestelling
-      const newOrder = new Order({
-        contactInfo,
-        items,
-        status: 'In productie', // Standaard status
-      });
-  
-      // Sla de bestelling op in de database
-      const savedOrder = await newOrder.save();
-  
-      console.log('Succesvol opgeslagen bestelling:', savedOrder); // Debugging log
-  
-      // Stuur een succesvolle response terug
-      res.status(201).json({ status: 'success', data: savedOrder });
-    } catch (error) {
-      console.error('Fout bij het maken van een bestelling:', error.message); // Debugging log
-  
-      res.status(500).json({
-        status: 'error',
-        message: 'Kon de bestelling niet aanmaken.',
-      });
+const createOrder = async (name, email, phone) => {
+  console.log('Data verzonden naar de backend:', {
+    contactInfo: { name, email, phone },
+    items: cart.value,
+  });
+
+  try {
+    const response = await fetch('https://threed-sneaker-store-seda-ezzat-helia.onrender.com/api/v1/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contactInfo: { name, email, phone },
+        items: cart.value, // Producten in de winkelwagen
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.statusText}`);
     }
-  };
+
+    const result = await response.json();
+    console.log('Order created:', result);
+  } catch (error) {
+    console.error('Error creating order:', error.message);
+  }
+};
+
   
 // 2. Verwijder een bestelling
 const deleteOrder = async (req, res) => {

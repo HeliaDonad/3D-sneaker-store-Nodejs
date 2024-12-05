@@ -10,7 +10,7 @@ const productSchema = new mongoose.Schema({
   price: { 
     type: Number, 
     required: true, 
-    min: 0 // Prijs moet positief zijn
+    min: 1 // Prijs moet positief zijn
   }
 }, { timestamps: true }); // Maakt `createdAt` en `updatedAt` velden aan
 

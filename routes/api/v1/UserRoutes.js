@@ -28,7 +28,6 @@ router.post(
       if (existingUser) {
         return res.status(400).json({ status: 'fail', message: 'E-mailadres is al in gebruik' });
       }
-
       const hashedPassword = await bcrypt.hash(password, 10);
       const user = new User({
         name,
@@ -45,7 +44,6 @@ router.post(
     }
   }
 );
-
 // Inlogroute
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
@@ -64,13 +62,11 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
       { userId: user._id, isAdmin: user.isAdmin },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '2h' }
     );
 
     // Bepaal de redirect URL op basis van de adminstatus
-    const redirectTo = user.isAdmin ? '/admin' : '/dashboard';
-
-    res.json({ status: 'success', data: { token, redirectTo } });
+    res.json({ status: 'success', data: { token, isAdmin: user.isAdmin } });
   } catch (error) {
     console.error('Error bij inloggen:', error);
     res.status(500).json({ status: 'error', message: 'Serverfout bij inloggen', error: error.message });
@@ -91,11 +87,13 @@ router.put('/change-password', auth, async (req, res) => {
       return res.status(404).json({ status: 'fail', message: 'Gebruiker niet gevonden' });
     }
 
+    // Controleer het oude wachtwoord
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
       return res.status(400).json({ status: 'fail', message: 'Ongeldig oud wachtwoord' });
     }
 
+    // Update het wachtwoord
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
@@ -109,24 +107,19 @@ router.put('/change-password', auth, async (req, res) => {
 // Dashboard Route
 router.get('/dashboard', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select('-password'); // Excludeer het wachtwoord
-    if (!user) {
-      return res.status(404).json({ status: 'fail', message: 'Gebruiker niet gevonden' });
+    // Controleer of de gebruiker admin is
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ status: 'fail', message: 'Toegang geweigerd' });
     }
 
-    const orders = await Order.find({ 'contactInfo.email': user.email });
-
-    res.status(200).json({
-      status: 'success',
-      data: {
-        user,
-        orders,
-      },
-    });
+    // Haal alle bestellingen op
+    const orders = await Order.find();
+    res.status(200).json({ status: 'success', data: { orders } });
   } catch (error) {
-    console.error('Error fetching dashboard data:', error);
+    console.error('Error bij dashboardgegevens ophalen:', error);
     res.status(500).json({ status: 'error', message: 'Kon dashboardgegevens niet ophalen', error: error.message });
   }
 });
+
 
 module.exports = router;

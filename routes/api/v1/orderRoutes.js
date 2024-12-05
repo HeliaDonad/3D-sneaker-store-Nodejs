@@ -12,7 +12,7 @@ const {
   checkoutOrder,
 } = require('../../../controllers/api/v1/orderControllers');
 
-// Routes
+// Routes voor bestellingen
 router.post('/', auth, createOrder); // POST /api/v1/orders
 router.delete('/:id', auth, adminAuth, deleteOrder); // DELETE /api/v1/orders/:id
 router.put('/:id', auth, adminAuth, updateOrderStatus); // PUT /api/v1/orders/:id

@@ -3,25 +3,38 @@ const mongoose = require('mongoose');
 
 // 1. Maak een bestelling
 const createOrder = async (req, res) => {
-  try {
-    const { contactInfo, items } = req.body;
-
-    if (!contactInfo || !items) {
-      return res.status(400).json({ status: 'fail', message: 'Missing required fields' });
+    console.log('Request ontvangen in createOrder:', req.body); // Debugging log
+    try {
+      const { contactInfo, items } = req.body;
+  
+      if (!contactInfo || !contactInfo.name || !contactInfo.email || !items || items.length === 0) {
+        console.log('Ontbrekende velden:', { contactInfo, items }); // Debugging log
+        return res.status(400).json({
+          status: 'fail',
+          message: 'Contactgegevens en minstens één item zijn verplicht.',
+        });
+      }
+  
+      const newOrder = new Order({
+        contactInfo,
+        items,
+        status: 'In productie', // Standaard status
+      });
+  
+      const savedOrder = await newOrder.save();
+  
+      console.log('Bestelling succesvol opgeslagen:', savedOrder); // Debugging log
+      res.status(201).json({ status: 'success', data: savedOrder });
+    } catch (error) {
+      console.error('Fout bij aanmaken bestelling:', error.message); // Debugging log
+      res.status(500).json({
+        status: 'error',
+        message: 'Kon de bestelling niet aanmaken.',
+        error: error.message,
+      });
     }
-
-    const newOrder = new Order({
-      contactInfo,
-      items,
-      status: 'In productie',
-    });
-
-    await newOrder.save();
-    res.status(201).json({ status: 'success', data: newOrder });
-  } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Failed to create order', error: error.message });
-  }
-};
+  };
+  
 
 // 2. Verwijder een bestelling
 const deleteOrder = async (req, res) => {

@@ -1,63 +1,30 @@
 const mongoose = require('mongoose');
 
 // Item-schema voor elk product in de bestelling
+// Item schema
 const itemSchema = new mongoose.Schema({
-  productId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    required: true, 
-    ref: 'Product' 
-  },
-  size: { type: Number, required: true, min: 36, max: 44 },
-  color: { type: String, required: false }, // Optionele kleur
-  quantity: { 
-    type: Number, 
-    required: true, 
-    min: 1,
-    validate: {
-      validator: Number.isInteger,
-      message: '{VALUE} is not a valid quantity. Must be an integer.'
-    }
-  }
+  productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+  size: { type: Number, required: true },
+  quantity: { type: Number, required: true, min: 1 },
 });
 
 // Hoofd-bestelschema
-const orderSchema = new mongoose.Schema({
-  items: { 
-    type: [itemSchema], 
-    required: true, 
-    validate: {
-      validator: function (items) {
-        return items.length > 0;
-      },
-      message: 'An order must contain at least one item.'
-    }
-  },
-  contactInfo: {
-    name: { type: String, required: true, trim: true, minlength: 1 },
-    email: { 
-      type: String, 
-      required: true, 
-      match: /\S+@\S+\.\S+/,
-      lowercase: true 
+const orderSchema = new mongoose.Schema(
+  {
+    contactInfo: {
+      name: { type: String, required: true },
+      email: { type: String, required: true },
+      phone: { type: String, required: false },
     },
-    phone: { 
-      type: String, 
-      required: true, 
-      match: /^[0-9]{10,15}$/ 
-    }
+    items: { type: [itemSchema], required: true },
+    status: {
+      type: String,
+      default: 'In productie',
+      enum: ['In productie', 'Verzonden', 'Geannuleerd'],
+    },
   },
-  status: {
-    type: String,
-    default: 'In productie', 
-    enum: ['In productie', 'Verzonden', 'Geannuleerd'] 
-  },
-  totalAmount: {
-    type: Number,
-    required: false, 
-    min: 0 
-  }
-}, { timestamps: true });
-
+  { timestamps: true }
+);
 // Bereken automatisch het totaalbedrag
 orderSchema.pre('save', async function (next) {
   if (this.isModified('items')) {

@@ -6,10 +6,10 @@ const createOrder = async (req, res) => {
     try {
       const { contactInfo, items } = req.body;
   
-      if (!contactInfo || !contactInfo.name || !contactInfo.email || !items || items.length === 0) {
+      if (!contactInfo || !contactInfo.name || !contactInfo.email || !contactInfo.phone || !items || items.length === 0) {
         return res.status(400).json({
           status: 'fail',
-          message: 'Contactgegevens en items zijn verplicht.',
+          message: 'Contactgegevens (naam, e-mail, telefoonnummer) en items zijn verplicht.',
         });
       }
   

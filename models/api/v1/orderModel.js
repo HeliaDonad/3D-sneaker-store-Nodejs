@@ -16,9 +16,9 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    default: 'In productie', // Default status for an order
-    enum: ['In productie', 'Verzonden', 'Geannuleerd'] // Enum of valid statuses
-  }
+    enum: ['Pending', 'In productie', 'Verzonden', 'Geannuleerd'],
+    default: 'Pending',
+  },  
 }, { timestamps: true });
 
 module.exports = mongoose.model('Order', orderSchema);

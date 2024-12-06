@@ -79,10 +79,38 @@ router.put('/orders/:id', auth, adminAuth, async (req, res) => {
   }
 });
 
-// 4. PATCH /orders/:orderId/items/:itemId - Update een item in een bestelling
+// PATCH /orders/:id - Update the status of an order (only admin)
+router.patch('/orders/:id', auth, adminAuth, async (req, res) => {
+  const { status } = req.body;
+
+  // Validate status
+  const allowedStatuses = ['Pending', 'In productie', 'Verzonden', 'Geannuleerd'];
+  if (status && !allowedStatuses.includes(status)) {
+    return res.status(400).json({ status: 'fail', message: 'Invalid status value' });
+  }
+
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ status: 'fail', message: 'Order not found' });
+    }
+
+    if (status) order.status = status; // Update status if provided
+    await order.save();
+
+    req.io.emit('orderStatusUpdated', order); // Emit live update
+    res.status(200).json({ status: 'success', data: order });
+  } catch (error) {
+    console.error('Error updating order:', error);
+    res.status(500).json({ status: 'error', message: 'Failed to update order', error: error.message });
+  }
+});
+
+// PATCH /orders/:orderId/items/:itemId - Update an item in a specific order
 router.patch('/orders/:orderId/items/:itemId', auth, async (req, res) => {
   const { size, quantity } = req.body;
 
+  // Validate size and quantity
   const errors = [];
   if (size && (typeof size !== 'number' || size < 30 || size > 50)) {
     errors.push('Size must be a number between 30 and 50');
@@ -116,6 +144,7 @@ router.patch('/orders/:orderId/items/:itemId', auth, async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Failed to update order item', error: error.message });
   }
 });
+
 
 // 5. GET /orders/:id - Haal een specifieke bestelling op
 router.get('/orders/:id', auth, async (req, res) => {

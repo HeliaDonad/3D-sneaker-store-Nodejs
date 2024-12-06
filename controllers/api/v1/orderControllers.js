@@ -68,40 +68,28 @@ const deleteOrder = async (req, res) => {
 // 3. Update status van een bestelling
 const updateOrderStatus = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
+    const { id } = req.params; // Haal order ID uit de URL
+    const { status } = req.body; // Haal de nieuwe status uit de body
 
-    if (!['In productie', 'Verzonden', 'Geannuleerd'].includes(status)) {
+    // Controleer of de status een toegestane waarde is
+    const allowedStatuses = ['Pending', 'In productie', 'Verzonden', 'Geannuleerd'];
+    if (!allowedStatuses.includes(status)) {
       return res.status(400).json({ status: 'fail', message: 'Invalid status value' });
     }
 
+    // Zoek de order en update de status
     const order = await Order.findByIdAndUpdate(id, { status }, { new: true });
     if (!order) {
       return res.status(404).json({ status: 'fail', message: 'Order not found' });
     }
 
-    res.status(200).json({ status: 'success', data: order });
-  } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Failed to update order status', error: error.message });
-  }
-};
-
-// 4. Haal een specifieke bestelling op
-const getOrderById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ status: 'fail', message: 'Invalid ID format' });
-    }
-
-    const order = await Order.findById(id).populate('items.productId');
-    if (!order) {
-      return res.status(404).json({ status: 'fail', message: 'Order not found' });
-    }
+    // Emit live update via Socket.IO
+    req.io.emit('orderStatusUpdated', order);
 
     res.status(200).json({ status: 'success', data: order });
-  } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Failed to fetch order', error: error.message });
+  } catch (err) {
+    console.error('Error updating order status:', err);
+    res.status(500).json({ status: 'fail', message: 'Server error' });
   }
 };
 
@@ -142,29 +130,49 @@ const addItemToOrder = async (req, res) => {
 // 7. Update een item in een bestelling
 const updateOrderItem = async (req, res) => {
   try {
-    const { orderId, itemId } = req.params;
-    const { size, quantity } = req.body;
+    const { orderId, itemId } = req.params; // Haal order- en item-ID's uit de URL
+    const { size, quantity } = req.body; // Haal size en quantity uit de body
 
+    // Zoek de bestelling
     const order = await Order.findById(orderId);
     if (!order) {
       return res.status(404).json({ status: 'fail', message: 'Order not found' });
     }
 
+    // Zoek het item in de bestelling
     const item = order.items.id(itemId);
     if (!item) {
       return res.status(404).json({ status: 'fail', message: 'Item not found' });
     }
 
-    if (size) item.size = size;
-    if (quantity) item.quantity = quantity;
+    // Update de itemwaarden indien aanwezig
+    if (size) {
+      if (typeof size !== 'number' || size < 30 || size > 50) {
+        return res.status(400).json({ status: 'fail', message: 'Size must be a number between 30 and 50' });
+      }
+      item.size = size;
+    }
 
+    if (quantity) {
+      if (typeof quantity !== 'number' || quantity <= 0) {
+        return res.status(400).json({ status: 'fail', message: 'Quantity must be a positive number' });
+      }
+      item.quantity = quantity;
+    }
+
+    // Sla de bestelling op
     await order.save();
+
+    // Emit live update via Socket.IO
+    req.io.emit('orderItemUpdated', order);
 
     res.status(200).json({ status: 'success', data: order });
   } catch (error) {
+    console.error('Error updating order item:', error);
     res.status(500).json({ status: 'error', message: 'Failed to update item', error: error.message });
   }
 };
+
 
 // 8. Finaliseer een bestelling
 const checkoutOrder = async (req, res) => {

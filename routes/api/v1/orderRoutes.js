@@ -33,12 +33,7 @@ router.post('/orders', auth, [
 });
 
 // 2. DELETE /orders/:id - Verwijder een bestelling
-router.delete('/orders/:id', auth, async (req, res) => {
-  // Only allow admins to delete orders
-  if (!req.user.isAdmin) {
-    return res.status(403).json({ status: 'fail', message: 'Access Denied: Admins Only' });
-  }
-
+router.delete('/orders/:id', auth, adminAuth, async (req, res) => {
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     return res.status(400).json({ status: 'fail', message: 'Invalid ID format' });
   }
@@ -49,45 +44,32 @@ router.delete('/orders/:id', auth, async (req, res) => {
       return res.status(404).json({ status: 'fail', message: 'Order not found' });
     }
 
-    console.log('Order deleted:', order); // Debug logging
-
     res.status(200).json({ status: 'success', data: null });
   } catch (error) {
-    console.error('Error deleting order:', error); // Debug logging
+    console.error('Error deleting order:', error);
     res.status(500).json({ status: 'error', message: 'Failed to delete order', error: error.message });
   }
 });
 
-// 3. PUT /orders/:id - Update de status van een bestelling
-router.put('/orders/:id', auth, async (req, res) => {
-  // Only allow admins to update order status
-  if (!req.user.isAdmin) {
-    return res.status(403).json({ status: 'fail', message: 'Access Denied: Admins Only' });
-  }
-
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ status: 'fail', data: errors.array() });
-  }
-
+router.put('/orders/:id', auth, adminAuth, async (req, res) => {
   try {
     const order = await Order.findByIdAndUpdate(
       req.params.id,
       { status: req.body.status },
       { new: true }
     );
+
     if (!order) {
       return res.status(404).json({ status: 'fail', message: 'Order not found' });
     }
 
-    console.log('Order updated:', order); // Debug logging
-
     res.status(200).json({ status: 'success', data: order });
   } catch (error) {
-    console.error('Error updating order:', error); // Debug logging
+    console.error('Error updating order status:', error);
     res.status(500).json({ status: 'error', message: 'Failed to update order', error: error.message });
   }
 });
+
 
 // 4. PATCH /orders/:orderId/items/:itemId - Update an item in the shopping bag (order)
 router.patch('/orders/:orderId/items/:itemId', auth, async (req, res) => {
@@ -157,16 +139,22 @@ router.get('/orders/:id', auth, async (req, res) => {
 // 6. GET /orders - Haal alle bestellingen op
 router.get('/orders', auth, async (req, res) => {
   try {
-    const orders = await Order.find().sort({ createdAt: -1 });
-
-    console.log('All orders fetched:', orders.length); // Debug logging
+    let orders;
+    if (req.user.isAdmin) {
+      // Admin kan alle orders zien
+      orders = await Order.find().sort({ createdAt: -1 });
+    } else {
+      // Gebruiker ziet alleen eigen orders
+      orders = await Order.find({ 'contactInfo.email': req.user.email }).sort({ createdAt: -1 });
+    }
 
     res.status(200).json({ status: 'success', data: orders });
   } catch (error) {
-    console.error('Error fetching orders:', error); // Debug logging
+    console.error('Error fetching orders:', error);
     res.status(500).json({ status: 'error', message: 'Failed to fetch orders', error: error.message });
   }
 });
+
 
 // 7. POST /orders/:orderId/items - Add an item to an existing order (shopping bag)
 router.post('/orders/:orderId/items', auth, async (req, res) => {

@@ -9,7 +9,8 @@ const mongoose = require('mongoose');
 router.post('/orders', auth, [
   check('contactInfo.name').notEmpty().withMessage('Name is required'),
   check('contactInfo.email').isEmail().withMessage('Valid email is required'),
-  check('items').isArray().withMessage('Items must be an array of objects')
+  check('contactInfo.phone').matches(/^\+32\d{8,10}$/).withMessage('Phone must be in the format +32xxxxxxxx'),
+  check('items').isArray().withMessage('Items must be an array of objects'),
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -20,7 +21,7 @@ router.post('/orders', auth, [
     const newOrder = new Order({
       contactInfo: req.body.contactInfo,
       status: req.body.status || 'In productie',
-      items: req.body.items || []  // Items come from the request body
+      items: req.body.items || []  // Items komen uit het request body
     });
 
     console.log('Saving new order:', newOrder); // Debug logging
@@ -34,7 +35,7 @@ router.post('/orders', auth, [
 
 // 2. DELETE /orders/:id - Verwijder een bestelling
 router.delete('/orders/:id', auth, async (req, res) => {
-  // Only allow admins to delete orders
+  // Alleen admins kunnen bestellingen verwijderen
   if (!req.user.isAdmin) {
     return res.status(403).json({ status: 'fail', message: 'Access Denied: Admins Only' });
   }
@@ -60,7 +61,7 @@ router.delete('/orders/:id', auth, async (req, res) => {
 
 // 3. PUT /orders/:id - Update de status van een bestelling
 router.put('/orders/:id', auth, async (req, res) => {
-  // Only allow admins to update order status
+  // Alleen admins kunnen de status van een bestelling bijwerken
   if (!req.user.isAdmin) {
     return res.status(403).json({ status: 'fail', message: 'Access Denied: Admins Only' });
   }

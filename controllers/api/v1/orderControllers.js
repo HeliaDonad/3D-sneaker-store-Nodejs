@@ -11,7 +11,7 @@ const createOrder = async (req, res) => {
       const { contactInfo, items } = req.body;
   
       // Controleer of de benodigde velden aanwezig zijn
-      if (!contactInfo || !contactInfo.name || !contactInfo.email || !contactInfo.phone || !items || items.length === 0) {
+      if (!contactInfo || !contactInfo.name || !contactInfo.email || !items || items.length === 0) {
         console.log('Ongeldige data ontvangen:', { contactInfo, items }); // Log de foutieve data
         return res.status(400).json({
           status: 'fail',

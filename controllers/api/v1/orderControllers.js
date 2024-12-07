@@ -1,67 +1,85 @@
 const Order = require('../../../models/api/v1/orderModel');
-
 const mongoose = require('mongoose');
 
 // 1. Maak een bestelling
 const createOrder = async (req, res) => {
-    try {
-      // Log de ontvangen request body
-      console.log('Request body ontvangen in backend:', req.body);
-  
-      const { contactInfo, items } = req.body;
-  
-      // Controleer of de benodigde velden aanwezig zijn
-      if (!contactInfo || !contactInfo.name || !contactInfo.email || !items || items.length === 0) {
-        console.log('Ongeldige data ontvangen:', { contactInfo, items }); // Log de foutieve data
-        return res.status(400).json({
-          status: 'fail',
-          message: 'Contactgegevens (naam, e-mail, telefoonnummer) en items zijn verplicht.',
-        });
-      }
-  
-      // Log voor debugging
-      console.log('Contactgegevens:', contactInfo);
-      console.log('Items:', items);
-  
-      const newOrder = new Order({
-        contactInfo,
-        items,
-        status: 'In productie',
-      });
-  
-      const savedOrder = await newOrder.save();
-  
-      // Log de opgeslagen bestelling
-      console.log('Bestelling succesvol aangemaakt:', savedOrder);
-  
-      res.status(201).json({ status: 'success', data: savedOrder });
-    } catch (error) {
-      console.error('Fout bij aanmaken bestelling:', error.message);
-      res.status(500).json({
-        status: 'error',
-        message: 'Kon de bestelling niet aanmaken.',
+  try {
+    // Log de ontvangen request body
+    console.log('Request body ontvangen in backend:', req.body);
+
+    const { contactInfo, items } = req.body;
+
+    // Controleer of de benodigde velden aanwezig zijn
+    if (!contactInfo || !contactInfo.name || !contactInfo.email || !items || items.length === 0) {
+      console.log('Ongeldige data ontvangen:', { contactInfo, items }); // Log de foutieve data
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Contactgegevens (naam, e-mail, telefoonnummer) en items zijn verplicht.',
       });
     }
-  };
-  
 
-  
+    // Log voor debugging
+    console.log('Contactgegevens:', contactInfo);
+    console.log('Items:', items);
+
+    const newOrder = new Order({
+      contactInfo,
+      items,
+      status: 'In productie',
+    });
+
+    const savedOrder = await newOrder.save();
+
+    // Log de opgeslagen bestelling
+    console.log('Bestelling succesvol aangemaakt:', savedOrder);
+
+    // Emit naar Socket.IO clients
+    if (req.io) {
+      req.io.emit('order-created', { message: 'Nieuwe bestelling aangemaakt', order: savedOrder });
+    } else {
+      console.error('Socket.IO niet beschikbaar op req');
+    }
+
+    res.status(201).json({ status: 'success', data: savedOrder });
+  } catch (error) {
+    console.error('Fout bij aanmaken bestelling:', error.message);
+    res.status(500).json({
+      status: 'error',
+      message: 'Kon de bestelling niet aanmaken.',
+    });
+  }
+};
+
 // 2. Verwijder een bestelling
 const deleteOrder = async (req, res) => {
   try {
     const { id } = req.params;
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ status: 'fail', message: 'Invalid ID format' });
     }
 
     const order = await Order.findByIdAndDelete(id);
+
     if (!order) {
       return res.status(404).json({ status: 'fail', message: 'Order not found' });
     }
 
+    // Emit naar Socket.IO clients
+    if (req.io) {
+      req.io.emit('order-deleted', { message: 'Bestelling verwijderd', orderId: id });
+    } else {
+      console.error('Socket.IO niet beschikbaar op req');
+    }
+
     res.status(200).json({ status: 'success', message: 'Order deleted successfully' });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Failed to delete order', error: error.message });
+    console.error('Fout bij verwijderen bestelling:', error.message);
+    res.status(500).json({
+      status: 'error',
+      message: 'Kon de bestelling niet verwijderen.',
+      error: error.message,
+    });
   }
 };
 

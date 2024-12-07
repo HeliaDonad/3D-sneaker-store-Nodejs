@@ -5,6 +5,7 @@ const { auth, adminAuth } = require('../../../middleware/auth'); // Import auth 
 //const { adminAuth } = require('../../../middleware/adminAuth'); // Middleware voor admincontrole
 const { check, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
+const cors = require('cors');
 
 // 1. POST /orders - Voeg een nieuwe bestelling toe
 router.post(
@@ -79,7 +80,7 @@ router.put('/orders/:id', auth, adminAuth, async (req, res) => {
   }
 });
 
-router.options('/:id', cors()); // Zorg dat OPTIONS-verzoeken werken
+router.options('/orders/:id', cors()); // Zorg dat OPTIONS-verzoeken werken
 
 // PATCH /orders/:id - Update the status of an order (only admin)
 router.patch('/orders/:id', auth, adminAuth, async (req, res) => {
@@ -99,7 +100,7 @@ router.patch('/orders/:id', auth, adminAuth, async (req, res) => {
 
     order.status = status;
     await order.save();
-    
+
     req.io.emit('orderStatusUpdated', order); // Emit live update
     res.status(200).json({ status: 'success', data: order });
   } catch (error) {

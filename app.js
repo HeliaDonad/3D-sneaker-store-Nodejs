@@ -112,12 +112,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Gebruik `server.listen` in plaats van `app.listen`
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server draait op poort ${PORT}`);
-});
-
 // Start verbinding met MongoDB en maak een admingebruiker aan
 connectDB();
 createAdminUser();

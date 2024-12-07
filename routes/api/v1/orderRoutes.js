@@ -42,7 +42,7 @@ router.post(
 // 2. DELETE /orders/:id - Verwijder een bestelling (alleen admin)
 router.delete('/orders/:id', auth, adminAuth, async (req, res) => {
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    return res.status(400).json({ status: 'fail', message: 'Invalid ID format' });
+    return res.status(400).json({ status: 'fail', message: 'Invalid order ID format' });
   }
 
   try {
@@ -51,13 +51,14 @@ router.delete('/orders/:id', auth, adminAuth, async (req, res) => {
       return res.status(404).json({ status: 'fail', message: 'Order not found' });
     }
 
-    req.io.emit('orderDeleted', order._id); // Emit live update voor verwijdering
-    res.status(200).json({ status: 'success', data: null });
+    req.io.emit('orderDeleted', req.params.id); // Informeer clients via WebSocket
+    res.status(200).json({ status: 'success', message: 'Order deleted successfully' });
   } catch (error) {
     console.error('Error deleting order:', error);
     res.status(500).json({ status: 'error', message: 'Failed to delete order', error: error.message });
   }
 });
+
 
 // 3. PUT /orders/:id - Update de status van een bestelling (alleen admin)
 router.put('/orders/:id', auth, adminAuth, async (req, res) => {

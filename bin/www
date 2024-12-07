@@ -3,10 +3,10 @@
 /**
  * Module dependencies.
  */
-const app = require("../app"); // Alleen de Express-app importeren
-const debug = require("debug")("3d-sneaker-store:server");
 const http = require("http");
 const { Server } = require("socket.io");
+const app = require("../app"); // Alleen de Express-app importeren
+const debug = require("debug")("3d-sneaker-store:server");
 
 /**
  * Get port from environment and store in Express.

@@ -25,6 +25,7 @@ app.use(cors({
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], // Toegestane HTTP-methoden
   allowedHeaders: ['Content-Type', 'Authorization'], // Toegestane headers
+  credentials: true, // Sta cookies en auth-tokens toe
 }));
 
 app.options('*', cors()); // Opties voor alle routes
@@ -85,7 +86,11 @@ const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+
   },
+  transports: ['websocket', 'polling'], // Voeg WebSocket en polling toe
+
 });
 
 io.on('connection', (socket) => {

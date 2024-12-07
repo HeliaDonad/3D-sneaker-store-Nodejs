@@ -50,6 +50,10 @@ router.post(
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
+  if (!email || !password) {
+    return res.status(400).json({ status: 'fail', message: 'E-mail en wachtwoord zijn verplicht' });
+  }
+
   try {
     const user = await User.findOne({ email });
     if (!user) {
@@ -67,13 +71,14 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1h' }
     );
 
-    // Bepaal de redirect URL op basis van de adminstatus
-    const redirectTo = user.isAdmin ? '/admin' : '/dashboard';
-
-    res.json({ status: 'success', data: { token, redirectTo } });
+    // Stuur `isAdmin` mee in de respons
+    res.json({ 
+      status: 'success', 
+      data: { token, isAdmin: user.isAdmin, redirectTo: user.isAdmin ? '/adminDashboard' : '/dashboard' } 
+    });
   } catch (error) {
-    console.error('Error bij inloggen:', error);
-    res.status(500).json({ status: 'error', message: 'Serverfout bij inloggen', error: error.message });
+    console.error('Login error:', error);
+    res.status(500).json({ status: 'error', message: 'Serverfout bij inloggen' });
   }
 });
 

@@ -27,6 +27,15 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'], // Toegestane headers
 }));
 
+// Globale foutafhandelaar
+app.use((err, req, res, next) => {
+  console.error('Globale fout:', err.stack || err.message || err);
+  res.status(500).json({
+    status: 'error',
+    message: 'Er ging iets mis. Probeer het later opnieuw.',
+  });
+});
+
 // Middleware voor JSON-parsing
 app.use(express.json());
 
@@ -66,6 +75,36 @@ const createAdminUser = async () => {
     console.error('Error creating admin user:', error.message);
   }
 };
+
+const http = require('http');
+const { Server } = require('socket.io');
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  },
+});
+
+io.on('connection', (socket) => {
+  console.log('Gebruiker verbonden met WebSocket');
+  socket.on('disconnect', () => {
+    console.log('Gebruiker verbroken van WebSocket');
+  });
+});
+
+// Middleware om `io` beschikbaar te maken in routes
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
+// Gebruik `server.listen` in plaats van `app.listen`
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server draait op poort ${PORT}`);
+});
 
 // Start verbinding met MongoDB en maak een admingebruiker aan
 connectDB();

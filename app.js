@@ -17,15 +17,16 @@ const allowedOrigins = [
 // Middleware voor CORS
 app.use(cors({
   origin: function (origin, callback) {
-    if (allowedOrigins.includes(origin) || !origin) {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.error(`Blocked by CORS: Origin ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], // Voeg PATCH expliciet toe
-  allowedHeaders: ['Content-Type', 'Authorization'], // Toegestane headers
-  credentials: true, // Sta cookies en autorisatie toe
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 }));
 
 app.options('*', cors()); // Opties voor alle routes
@@ -33,6 +34,9 @@ app.options('*', cors()); // Opties voor alle routes
 
 // Globale foutafhandelaar
 app.use((err, req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204); // Behandel preflight-verzoeken apart
+  }
   console.error('Globale fout:', err.stack || err.message || err);
   res.status(500).json({
     status: 'error',
@@ -87,13 +91,13 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-
+    credentials: true, // Sta cookies en tokens toe
   },
-  transports: ['websocket', 'polling'], // Voeg WebSocket en polling toe
-
+  transports: ['websocket', 'polling'], // Ondersteun WebSocket en polling
 });
+
 
 io.on('connection', (socket) => {
   console.log('Gebruiker verbonden met WebSocket');

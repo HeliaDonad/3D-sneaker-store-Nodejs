@@ -7,6 +7,9 @@ const bcrypt = require('bcryptjs'); // Voor hashing van wachtwoorden
 const { Server } = require('socket.io'); // Voor live updates
 const http = require('http');
 
+const openaiRoutes = require('./routes/api/v1/openai');
+app.use('/api/v1', openaiRoutes);
+
 // Maak een HTTP-server
 const server = http.createServer(app);
 
@@ -26,6 +29,7 @@ io.on('connection', (socket) => {
     console.log('User disconnected from WebSocket');
   });
 });
+
 
 // Middleware om Socket.IO te injecteren in requests
 app.use((req, res, next) => {

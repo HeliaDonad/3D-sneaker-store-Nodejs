@@ -90,13 +90,16 @@ const { Server } = require('socket.io');
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    origin: [
+      'http://localhost:5173',
+      'https://threed-sneaker-store-seda-ezzat-helia.onrender.com',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true, // Sta cookies en tokens toe
+    credentials: true, // Sta cookies en autorisatie toe
   },
-  transports: ['websocket', 'polling'], // Ondersteun WebSocket en polling
 });
+
 
 
 io.on('connection', (socket) => {

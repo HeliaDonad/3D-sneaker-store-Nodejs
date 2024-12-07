@@ -79,13 +79,15 @@ router.put('/orders/:id', auth, adminAuth, async (req, res) => {
   }
 });
 
+router.options('/:id', cors()); // Zorg dat OPTIONS-verzoeken werken
+
 // PATCH /orders/:id - Update the status of an order (only admin)
 router.patch('/orders/:id', auth, adminAuth, async (req, res) => {
   const { status } = req.body;
 
   // Validate status
   const allowedStatuses = ['Pending', 'In productie', 'Verzonden', 'Geannuleerd'];
-  if (status && !allowedStatuses.includes(status)) {
+  if (!allowedStatuses.includes(status)) {
     return res.status(400).json({ status: 'fail', message: 'Invalid status value' });
   }
 
@@ -95,9 +97,9 @@ router.patch('/orders/:id', auth, adminAuth, async (req, res) => {
       return res.status(404).json({ status: 'fail', message: 'Order not found' });
     }
 
-    if (status) order.status = status; // Update status if provided
+    order.status = status;
     await order.save();
-
+    
     req.io.emit('orderStatusUpdated', order); // Emit live update
     res.status(200).json({ status: 'success', data: order });
   } catch (error) {

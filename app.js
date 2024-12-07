@@ -23,12 +23,14 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], // Toegestane HTTP-methoden
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], // Voeg PATCH expliciet toe
   allowedHeaders: ['Content-Type', 'Authorization'], // Toegestane headers
-  credentials: true, // Sta cookies en auth-tokens toe
+  credentials: true, // Sta cookies en autorisatie toe
 }));
 
 app.options('*', cors()); // Opties voor alle routes
+
+
 // Globale foutafhandelaar
 app.use((err, req, res, next) => {
   console.error('Globale fout:', err.stack || err.message || err);

@@ -97,7 +97,6 @@ router.patch('/orders/:id', auth, adminAuth, async (req, res) => {
 
     if (status) order.status = status; // Update status if provided
     await order.save();
-    req.io.emit('orderStatusUpdated', { orderId: order._id, newStatus: order.status });
 
     req.io.emit('orderStatusUpdated', order); // Emit live update
     res.status(200).json({ status: 'success', data: order });
@@ -108,34 +107,43 @@ router.patch('/orders/:id', auth, adminAuth, async (req, res) => {
 });
 
 // PATCH /orders/:orderId/items/:itemId - Update an item in a specific order
-router.patch('/orders/:id', auth, adminAuth, async (req, res) => {
-  const { status } = req.body;
+router.patch('/orders/:orderId/items/:itemId', auth, async (req, res) => {
+  const { size, quantity } = req.body;
 
-  // Validate status
-  const allowedStatuses = ['Pending', 'In productie', 'Verzonden', 'Geannuleerd'];
-  if (status && !allowedStatuses.includes(status)) {
-    return res.status(400).json({ status: 'fail', message: 'Invalid status value' });
+  // Validate size and quantity
+  const errors = [];
+  if (size && (typeof size !== 'number' || size < 30 || size > 50)) {
+    errors.push('Size must be a number between 30 and 50');
+  }
+  if (quantity && (typeof quantity !== 'number' || quantity <= 0)) {
+    errors.push('Quantity must be a positive number');
+  }
+  if (errors.length > 0) {
+    return res.status(400).json({ status: 'fail', data: errors });
   }
 
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.orderId);
     if (!order) {
       return res.status(404).json({ status: 'fail', message: 'Order not found' });
     }
 
-    if (status) order.status = status; // Update status if provided
+    const itemIndex = order.items.findIndex(item => item._id.toString() === req.params.itemId);
+    if (itemIndex === -1) {
+      return res.status(404).json({ status: 'fail', message: 'Item not found in order' });
+    }
+
+    const item = order.items[itemIndex];
+    if (size) item.size = size;
+    if (quantity) item.quantity = quantity;
+
     await order.save();
-
-    // Emit live update
-    req.io.emit('orderStatusUpdated', { orderId: order._id, newStatus: order.status });
-
     res.status(200).json({ status: 'success', data: order });
   } catch (error) {
-    console.error('Error updating order:', error);
-    res.status(500).json({ status: 'error', message: 'Failed to update order', error: error.message });
+    console.error('Error updating order item:', error);
+    res.status(500).json({ status: 'error', message: 'Failed to update order item', error: error.message });
   }
 });
-
 
 
 // 5. GET /orders/:id - Haal een specifieke bestelling op

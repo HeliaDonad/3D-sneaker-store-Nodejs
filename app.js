@@ -1,46 +1,22 @@
 const express = require('express');
 const cors = require('cors'); // Importeer cors
-const app = express();
 require('dotenv').config(); // Laad .env bestanden
-const User = require('./models/api/v1/userModel'); // Zorg dat het pad naar userModel correct is
 const bcrypt = require('bcryptjs'); // Voor hashing van wachtwoorden
-const { Server } = require('socket.io'); // Voor live updates
-const http = require('http');
+const User = require('./models/api/v1/userModel'); // Zorg dat het pad naar userModel correct is
+const connectDB = require('./config/db');
 
-// Maak een HTTP-server
-const server = http.createServer(app);
-
-// Configureer Socket.IO
-const io = new Server(server, {
-  cors: {
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'https://threed-sneaker-store-seda-ezzat-helia.onrender.com'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  },
-});
-
-// Socket.IO connection
-io.on('connection', (socket) => {
-  console.log('User connected to WebSocket');
-  socket.on('disconnect', () => {
-    console.log('User disconnected from WebSocket');
-  });
-});
-
-
-// Middleware om Socket.IO te injecteren in requests
-app.use((req, res, next) => {
-  req.io = io;
-  next();
-});
+const app = express(); // Maak een Express-app
 
 // Toegestane origins voor CORS
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'https://threed-sneaker-store-seda-ezzat-helia.onrender.com'];
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://threed-sneaker-store-seda-ezzat-helia.onrender.com',
+];
 
-// Configuratie en middleware toevoegen
+// Middleware voor CORS
 app.use(cors({
   origin: function (origin, callback) {
-    // Controleer of de origin in de toegestane lijst staat
     if (allowedOrigins.includes(origin) || !origin) {
       callback(null, true);
     } else {
@@ -51,11 +27,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'], // Toegestane headers
 }));
 
-// Middleware voor JSON
+// Middleware voor JSON-parsing
 app.use(express.json());
-
-// Connectie naar MongoDB
-const connectDB = require('./config/db');
 
 // Basisroute
 app.get('/', (req, res) => {
@@ -77,7 +50,7 @@ const createAdminUser = async () => {
     const existingAdmin = await User.findOne({ email: adminEmail });
 
     if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash('Admin', 10); // Wachtwoord 'Admin' wordt gehasht
+      const hashedPassword = await bcrypt.hash('Admin', 10);
       const adminUser = new User({
         name: 'Admin',
         email: adminEmail,
@@ -98,5 +71,5 @@ const createAdminUser = async () => {
 connectDB();
 createAdminUser();
 
-// Exporteer `server` in plaats van `app` om Socket.IO te ondersteunen
-module.exports = { app, server };
+// Exporteer de Express-app
+module.exports = app;

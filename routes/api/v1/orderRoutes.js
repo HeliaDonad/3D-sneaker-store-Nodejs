@@ -10,18 +10,8 @@ const cors = require('cors');
 // 1. POST /orders - Voeg een nieuwe bestelling toe
 router.post(
   '/orders',
-  auth,
-  [
-    check('contactInfo.name').notEmpty().withMessage('Name is required'),
-    check('contactInfo.email').isEmail().withMessage('Valid email is required'),
-    check('items').isArray().withMessage('Items must be an array of objects'),
-  ],
+  auth, // Controleer of de gebruiker is geauthenticeerd
   async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ status: 'fail', data: errors.array() });
-    }
-
     try {
       const newOrder = new Order({
         contactInfo: req.body.contactInfo,
@@ -30,14 +20,26 @@ router.post(
       });
 
       await newOrder.save();
-      req.io.emit('newOrder', newOrder); // Emit live update voor nieuwe orders
+
+      // Controleer of `req.io` bestaat voordat je `emit` aanroept
+      if (req.io) {
+        req.io.emit('newOrder', newOrder); // Emit live update voor nieuwe orders
+      } else {
+        console.error('Socket.IO instance is not available in req');
+      }
+
       res.status(201).json({ status: 'success', data: newOrder });
     } catch (error) {
       console.error('Error saving order:', error);
-      res.status(500).json({ status: 'error', message: 'Failed to save order', error: error.message });
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to save order',
+        error: error.message,
+      });
     }
   }
 );
+
 
 // 2. DELETE /orders/:id - Verwijder een bestelling (alleen admin)
 router.delete('/orders/:id', auth, adminAuth, async (req, res) => {

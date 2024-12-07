@@ -14,6 +14,12 @@ const allowedOrigins = [
   'https://threed-sneaker-store-seda-ezzat-helia.onrender.com',
 ];
 
+// Middleware om `io` beschikbaar te maken in routes
+app.use((req, res, next) => {
+  req.io = io; // Socket.IO toevoegen aan het request-object
+  next();
+});
+
 // Middleware voor CORS
 app.use(cors({
   origin: function (origin, callback) {
@@ -109,11 +115,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// Middleware om `io` beschikbaar te maken in routes
-app.use((req, res, next) => {
-  req.io = io;
-  next();
-});
+
 
 // Start verbinding met MongoDB en maak een admingebruiker aan
 connectDB();

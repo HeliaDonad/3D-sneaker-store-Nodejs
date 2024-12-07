@@ -3,10 +3,12 @@ const { Configuration, OpenAIApi } = require('openai');
 const router = express.Router();
 
 const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.OPENAI_API_KEY, // Zorg ervoor dat deze sleutel correct is ingesteld in je .env
+    organization: "org-5dxXojyYeoGSGwGySX18dOMj", // Optioneel: organisatie-ID
 });
 const openai = new OpenAIApi(configuration);
 
+// POST endpoint voor het genereren van een schoenafbeelding
 router.post('/generate-image', async (req, res) => {
     const { prompt } = req.body;
 

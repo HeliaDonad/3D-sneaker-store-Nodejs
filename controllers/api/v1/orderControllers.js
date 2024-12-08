@@ -25,11 +25,7 @@ const createOrder = async (req, res) => {
   
       const newOrder = new Order({
         contactInfo,
-        items: items.map(item => ({
-          productId: item.productId,
-          size: item.size,
-          quantity: item.quantity,
-        })),  
+        items,
         status: 'In productie',
       });
   

@@ -13,37 +13,17 @@ router.post(
   auth, // Controleer of de gebruiker is geauthenticeerd
   async (req, res) => {
     try {
-      const { contactInfo, items } = req.body;
-
-      if (!items || items.length === 0) {
-        return res.status(400).json({ status: 'fail', message: 'Order must contain items' });
-      }
-
-      // Valideer elk item
-      for (let item of items) {
-        if (!item.productId || !item.size || !item.quantity) {
-          return res.status(400).json({
-            status: 'fail',
-            message: 'Each item must contain productId, size, and quantity',
-          });
-        }
-      }
-
       const newOrder = new Order({
-        contactInfo,
+        contactInfo: req.body.contactInfo,
         status: req.body.status || 'Pending',
-        items: items.map(item => ({
-          productId: item.productId,
-          size: item.size,
-          quantity: item.quantity,
-        })),  
+        items: req.body.items || [],
       });
 
       await newOrder.save();
 
-      // Emit een live update voor nieuwe orders, als Socket.IO beschikbaar is
+      // Controleer of `req.io` bestaat voordat je `emit` aanroept
       if (req.io) {
-        req.io.emit('newOrder', newOrder);
+        req.io.emit('newOrder', newOrder); // Emit live update voor nieuwe orders
       } else {
         console.error('Socket.IO instance is not available in req');
       }

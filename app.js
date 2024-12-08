@@ -21,21 +21,21 @@ app.use((req, res, next) => {
 });
 
 // Middleware voor CORS
-
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.error(`Blocked by CORS: Origin ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], // Sta deze methoden toe
-  allowedHeaders: ['Content-Type', 'Authorization'], // Sta deze headers toe
-  credentials: true, // Cookies en Authorization headers toestaan
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 }));
 
-app.options('*', cors()); // OPTIONS-verzoeken toestaan (preflight)
+app.options('*', cors()); // Opties voor alle routes
 
 
 // Globale foutafhandelaar

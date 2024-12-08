@@ -187,22 +187,6 @@ router.get('/orders', auth, async (req, res) => {
   }
 });
 
-router.get('/', auth, async (req, res) => {
-  try {
-    let orders;
-    if (req.user.isAdmin) {
-      orders = await Order.find().populate('items.productId');
-    } else {
-      orders = await Order.find({ user: req.user.id }).populate('items.productId');
-    }
-    res.status(200).json({ status: 'success', data: orders });
-  } catch (error) {
-    console.error('Error fetching orders:', error.message);
-    res.status(500).json({ status: 'fail', message: 'Failed to fetch orders' });
-  }
-});
-
-
 // 7. POST /orders/:orderId/items - Add an item to an existing order (shopping bag)
 router.post('/orders/:orderId/items', auth, async (req, res) => {
   const { size, quantity } = req.body;

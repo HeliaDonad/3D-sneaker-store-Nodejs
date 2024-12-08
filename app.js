@@ -4,10 +4,8 @@ require('dotenv').config(); // Laad .env bestanden
 const bcrypt = require('bcryptjs'); // Voor hashing van wachtwoorden
 const User = require('./models/api/v1/userModel'); // Zorg dat het pad naar userModel correct is
 const connectDB = require('./config/db');
-const customizationRoutes = require('./routes/customizationRoutes');
 
 const app = express(); // Maak een Express-app
-app.use('/api/v1/customization', customizationRoutes);
 
 // Toegestane origins voor CORS
 const allowedOrigins = [

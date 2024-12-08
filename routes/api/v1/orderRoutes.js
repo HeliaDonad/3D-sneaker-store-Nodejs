@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../../../models/api/v1/orderModel');
 const { auth, adminAuth } = require('../../../middleware/auth'); // Import auth middleware
+//const { adminAuth } = require('../../../middleware/adminAuth'); // Middleware voor admincontrole
 const { check, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -39,6 +40,7 @@ router.post(
   }
 );
 
+
 // 2. DELETE /orders/:id - Verwijder een bestelling (alleen admin)
 router.delete('/orders/:id', auth, adminAuth, async (req, res) => {
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -58,6 +60,7 @@ router.delete('/orders/:id', auth, adminAuth, async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Failed to delete order', error: error.message });
   }
 });
+
 
 // 3. PUT /orders/:id - Update de status van een bestelling (alleen admin)
 router.put('/orders/:id', auth, adminAuth, async (req, res) => {
@@ -115,8 +118,8 @@ router.patch('/orders/:orderId/items/:itemId', auth, async (req, res) => {
 
   // Validate size and quantity
   const errors = [];
-  if (size && (typeof size !== 'string')) {
-    errors.push('Size must be a valid string');
+  if (size && (typeof size !== 'number' || size < 30 || size > 50)) {
+    errors.push('Size must be a number between 30 and 50');
   }
   if (quantity && (typeof quantity !== 'number' || quantity <= 0)) {
     errors.push('Quantity must be a positive number');
@@ -147,6 +150,7 @@ router.patch('/orders/:orderId/items/:itemId', auth, async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Failed to update order item', error: error.message });
   }
 });
+
 
 // 5. GET /orders/:id - Haal een specifieke bestelling op
 router.get('/orders/:id', auth, async (req, res) => {
@@ -189,7 +193,6 @@ router.get('/orders', auth, async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Failed to fetch orders', error: error.message });
   }
 });
-
 
 
 // 7. POST /orders/:orderId/items - Add an item to an existing order (shopping bag)

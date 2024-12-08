@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../../../models/api/v1/orderModel');
 const { auth, adminAuth } = require('../../../middleware/auth'); // Import auth middleware
+//const { adminAuth } = require('../../../middleware/adminAuth'); // Middleware voor admincontrole
 const { check, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 const cors = require('cors');

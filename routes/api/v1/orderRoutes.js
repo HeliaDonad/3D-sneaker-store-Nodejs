@@ -32,7 +32,11 @@ router.post(
       const newOrder = new Order({
         contactInfo,
         status: req.body.status || 'Pending',
-        items, // Zet de items rechtstreeks in de database
+        items: items.map(item => ({
+          productId: item.productId,
+          size: item.size,
+          quantity: item.quantity,
+        })),  
       });
 
       await newOrder.save();

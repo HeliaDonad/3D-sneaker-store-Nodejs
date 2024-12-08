@@ -174,12 +174,8 @@ router.get('/orders/:id', auth, async (req, res) => {
 // 6. GET /orders - Haal alle bestellingen op (admin alle, gebruiker alleen eigen orders)
 router.get('/orders', auth, async (req, res) => {
   try {
-    let orders;
-    if (req.user.isAdmin) {
-      orders = await Order.find().sort({ createdAt: -1 });
-    } else {
-      orders = await Order.find({ 'contactInfo.email': req.user.email }).sort({ createdAt: -1 });
-    }
+    // Haal alle orders op, ongeacht of de gebruiker admin is
+    const orders = await Order.find().sort({ createdAt: -1 });
 
     res.status(200).json({ status: 'success', data: orders });
   } catch (error) {
@@ -187,6 +183,7 @@ router.get('/orders', auth, async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Failed to fetch orders', error: error.message });
   }
 });
+
 
 // 7. POST /orders/:orderId/items - Add an item to an existing order (shopping bag)
 router.post('/orders/:orderId/items', auth, async (req, res) => {

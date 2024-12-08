@@ -173,17 +173,18 @@ router.get('/orders/:id', auth, async (req, res) => {
 // 6. GET /orders - Haal alle bestellingen op (admin alle, gebruiker alleen eigen orders)
 router.get('/orders', auth, async (req, res) => {
   try {
-    let orders;
-    if (req.user.isAdmin) {
-      orders = await Order.find().sort({ createdAt: -1 });
-    } else {
-      orders = await Order.find({ 'contactInfo.email': req.user.email }).sort({ createdAt: -1 });
+    // Admins zien alle orders, niet-admins alleen hun eigen orders
+    const query = req.user.isAdmin ? {} : { user: req.user.id };
+    const orders = await Order.find(query).populate('items.productId');
+    
+    if (!orders.length) {
+      return res.status(404).json({ status: 'fail', message: 'No orders found' });
     }
 
     res.status(200).json({ status: 'success', data: orders });
   } catch (error) {
-    console.error('Error fetching orders:', error);
-    res.status(500).json({ status: 'error', message: 'Failed to fetch orders', error: error.message });
+    console.error('Error fetching orders:', error.message);
+    res.status(500).json({ status: 'fail', message: 'Failed to fetch orders' });
   }
 });
 

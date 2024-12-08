@@ -175,9 +175,15 @@ router.get('/orders/:id', auth, async (req, res) => {
 router.get('/orders', auth, async (req, res) => {
   try {
     let orders;
-    if (req.user.isAdmin) {
+
+    if (req.query.all && req.user.isAdmin) {
+      // Admin kan alle orders ophalen als 'all' is gespecificeerd
+      orders = await Order.find().sort({ createdAt: -1 });
+    } else if (req.query.all) {
+      // Niet-admin gebruikers kunnen optioneel alle orders zien
       orders = await Order.find().sort({ createdAt: -1 });
     } else {
+      // Standaard: gebruikers zien alleen hun eigen orders
       orders = await Order.find({ 'contactInfo.email': req.user.email }).sort({ createdAt: -1 });
     }
 
@@ -187,6 +193,7 @@ router.get('/orders', auth, async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Failed to fetch orders', error: error.message });
   }
 });
+
 
 // 7. POST /orders/:orderId/items - Add an item to an existing order (shopping bag)
 router.post('/orders/:orderId/items', auth, async (req, res) => {

@@ -1,46 +1,24 @@
 const mongoose = require('mongoose');
 
+// Define the item schema for each product in the order
+const itemSchema = new mongoose.Schema({
+  productId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Product' },
+  size: { type: Number, required: true, min: 36, max: 44 }, // Shoe size between 36 and 44
+  quantity: { type: Number, required: true, min: 1 } // Minimum quantity is 1
+});
+
+// Define the main order schema
 const orderSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  items: [
-    {
-      productId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product',
-        required: true,
-      },
-      size: {
-        type: String,
-        required: true,
-      },
-      quantity: {
-        type: Number,
-        required: true,
-        min: 1,
-      },
-    },
-  ],
+  items: { type: [itemSchema], required: true }, // Array of items in the order
   contactInfo: {
-    name: { type: String, required: true },
-    email: { type: String, required: true },
-  },
-  total: {
-    type: Number,
-    required: true,
+    name: { type: String, required: true }, // Name of the person placing the order
+    email: { type: String, required: true, match: /\S+@\S+\.\S+/ } // Email must be valid
   },
   status: {
     type: String,
-    enum: ['Pending', 'Processing', 'Shipped', 'Delivered'],
+    enum: ['Pending', 'In productie', 'Verzonden', 'Geannuleerd'],
     default: 'Pending',
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  },  
+}, { timestamps: true });
 
 module.exports = mongoose.model('Order', orderSchema);

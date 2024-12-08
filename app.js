@@ -107,29 +107,11 @@ const io = new Server(server, {
 });
 
 
+
 io.on('connection', (socket) => {
-  console.log('Gebruiker verbonden met WebSocket:', socket.id);
-
-  // Luisteren naar specifieke events van de client
-  socket.on('statusUpdateRequest', (data) => {
-    console.log('Status update request ontvangen:', data);
-    // Je kunt hiermee specifieke logica uitvoeren als een client een actie initieert
-  });
-
-  // Voorbeeld: Functie om live updates naar alle clients te sturen
-  const sendStatusUpdate = (orderId, status) => {
-    console.log(`Order ${orderId} status gewijzigd naar ${status}`);
-    io.emit('statusUpdate', { orderId, status });
-  };
-
-  // Simuleer een statusupdate na een bepaalde tijd (bijv. door een admin)
-  setTimeout(() => {
-    sendStatusUpdate(123, 'Verzonden');
-  }, 5000);
-
-  // Wanneer de socket wordt verbroken
+  console.log('Gebruiker verbonden met WebSocket');
   socket.on('disconnect', () => {
-    console.log('Gebruiker verbroken van WebSocket:', socket.id);
+    console.log('Gebruiker verbroken van WebSocket');
   });
 });
 

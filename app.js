@@ -10,7 +10,7 @@ const app = express(); // Maak een Express-app
 // Toegestane origins voor CORS
 const allowedOrigins = [
   'http://localhost:5173',
-  'http://localhost:5174',
+  'https://3d-sneaker-store-ender-helia-seda.vercel.app',
   'https://threed-sneaker-store-seda-ezzat-helia.onrender.com',
 ];
 
